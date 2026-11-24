@@ -111,6 +111,20 @@ h2 { font-size: 19px; letter-spacing: -.01em; }
 .pill[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .pill .c { font-size: 11px; font-weight: 700; opacity: .75; }
 
+/* Travel + goals */
+.travel { display: grid; gap: 10px; }
+.travel-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.travel-top .grow { flex: 1 1 160px; min-width: 0; }
+.travel.on { background: var(--accent-soft); border-color: transparent; }
+.goal { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.goal:first-child { border-top: 0; }
+.goal .gtick { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line); background: transparent; flex: none; display: grid; place-items: center; color: transparent; font-size: 12px; font-weight: 800; padding: 0; margin-top: 1px; }
+.goal .gtick[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.goal .gtext { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.goal.done .gtext { color: var(--muted); text-decoration: line-through; }
+.goal .gdel { background: none; border: 0; color: var(--muted); font-size: 14px; padding: 2px 4px; }
+.grid7 th .tv { display: block; font-size: 10px; }
+
 /* Forms */
 .field { display: grid; gap: 5px; }
 .field > span { font-size: 13px; font-weight: 700; color: var(--muted); }
@@ -319,6 +333,7 @@ const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 let config = null;           // { habits, extras, unit, created }
 const days = {};             // 'YYYY-MM-DD' -> day doc
 let insights = null;         // last Claude analysis
+const goals = {};            // 'YYYY-MM' -> { month, items: [{id, text, done}] }
 let view = 'today';
 let cursor = today();
 let weekCursor = weekStart(today());
@@ -327,7 +342,10 @@ let store = null;            // backend adapter
 let sample = null;           // Claude, or null
 let loaded = false;
 
-const blankDay = (k) => ({ date: k, habits: {}, extras: {}, food: [], feel: {}, weight: null });
+const blankDay = (k) => ({ date: k, habits: {}, extras: {}, food: [], feel: {}, weight: null, travel: false, where: '' });
+const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const getGoals = (mk) => goals[mk] || { month: mk, items: [] };
+function editGoals(mk, fn) { const g = structuredClone(getGoals(mk)); fn(g); goals[mk] = g; store.saveGoals(mk, g); }
 const getDay = (d) => days[dkey(d)] || blankDay(dkey(d));
 function editDay(d, fn) {
   const k = dkey(d);
@@ -382,6 +400,7 @@ async function dbBackend(db, uid) {
         if (id === 'config') config = structuredClone(data);
         else if (id === 'insights') insights = structuredClone(data);
         else if (DAY_RE.test(id)) days[id] = structuredClone(data);
+        else if (id.startsWith('goals-')) goals[id.slice(6)] = structuredClone(data);
       }
       for (const ch of snap.docChanges()) {
         if (ch.type === 'removed' && DAY_RE.test(ch.doc.id) && !writer.busy(ch.doc.id)) delete days[ch.doc.id];
@@ -399,6 +418,7 @@ async function dbBackend(db, uid) {
     saveDay: (k, body) => writer.queue(k, body),
     saveConfig: (c) => writer.queue('config', c),
     saveInsights: (x) => writer.queue('insights', x),
+    saveGoals: (mk, g) => writer.queue('goals-' + mk, g),
   };
 }
 
@@ -406,15 +426,16 @@ function localBackend() {
   const KEY = 'daily-rhythm.local.v1';
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (raw) { config = raw.config; Object.assign(days, raw.days || {}); insights = raw.insights || null; }
+    if (raw) { config = raw.config; Object.assign(days, raw.days || {}); Object.assign(goals, raw.goals || {}); insights = raw.insights || null; }
   } catch (_) {}
-  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ config, days, insights })); } catch (_) {} };
-  return { kind: 'local', saveDay: persist, saveConfig: persist, saveInsights: persist };
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ config, days, goals, insights })); } catch (_) {} };
+  return { kind: 'local', saveDay: persist, saveConfig: persist, saveInsights: persist, saveGoals: persist };
 }
 
 /* ================= Habit logic ================= */
 
 const isDone = (h, d) => !!getDay(d).habits[h.id];
+const isTravel = (d) => !!getDay(d).travel;
 const scheduled = (h, d) => h.schedule.type !== 'weekdays' || isWeekday(d);
 function weekCount(h, d) { const ws = weekStart(d); let n = 0; for (let i = 0; i < 7; i++) if (isDone(h, addDays(ws, i))) n++; return n; }
 function schedLabel(s) { return s.type === 'weekdays' ? 'Weekdays' : s.type === 'weekly' ? (s.times === 1 ? 'Once a week' : `${s.times}× a week`) : 'Every day'; }
@@ -430,7 +451,13 @@ function streak(h) {
     return n;
   }
   let d = isDone(h, t) ? t : addDays(t, -1), n = 0;
-  while (d >= start) { if (scheduled(h, d)) { if (!isDone(h, d)) break; n++; } d = addDays(d, -1); }
+  while (d >= start) {
+    if (scheduled(h, d)) {
+      if (isDone(h, d)) n++;
+      else if (!isTravel(d)) break; // a missed habit while traveling doesn't end the streak
+    }
+    d = addDays(d, -1);
+  }
   return n;
 }
 function rate30(h) {
@@ -438,7 +465,7 @@ function rate30(h) {
   if (h.schedule.type === 'weekly') {
     for (let i = 0; i < 4; i++) { const ws = addDays(weekStart(t), -7 * i); if (addDays(ws, 6) < start) break; const met = weekCount(h, ws) >= h.schedule.times; if (i === 0 && !met) continue; tot++; if (met) hit++; }
   } else {
-    for (let i = 0; i < 30; i++) { const d = addDays(t, -i); if (d < start) break; if (!scheduled(h, d)) continue; if (i === 0 && !isDone(h, d)) continue; tot++; if (isDone(h, d)) hit++; }
+    for (let i = 0; i < 30; i++) { const d = addDays(t, -i); if (d < start) break; if (!scheduled(h, d)) continue; if (!isDone(h, d) && (i === 0 || isTravel(d))) continue; tot++; if (isDone(h, d)) hit++; }
   }
   return tot ? hit / tot : null;
 }
@@ -501,6 +528,30 @@ function renderToday() {
       <span class="tick" aria-hidden="true">✓</span></button></li>`;
   };
 
+  const ytd = getDay(addDays(d, -1));
+  const travelCard = `<section class="card travel ${day.travel ? 'on' : ''}">
+      <div class="travel-top">
+        <button type="button" class="pill" data-act="travel-toggle" aria-pressed="${!!day.travel}"><span aria-hidden="true">✈️</span>${day.travel ? 'Traveling' : 'Traveling today?'}</button>
+        ${day.travel
+          ? `<input type="text" id="travel-where" class="grow" maxlength="60" placeholder="Where? (optional)" value="${esc(day.where || '')}" aria-label="Where are you?">`
+          : ytd.travel ? `<span class="small muted grow">Yesterday: ${esc(ytd.where || 'traveling')}. Still away? Tap to continue.</span>` : `<span class="small muted grow">Missed habits won't break streaks on travel days.</span>`}
+      </div>
+      ${day.travel ? '<span class="small muted">Streaks are paused for anything you skip today. Anything you do still counts.</span>' : ''}
+    </section>`;
+
+  const mk = monthKey(d), g = getGoals(mk);
+  const monthName = fmt(d, { month: 'long' });
+  const gDone = g.items.filter((x) => x.done).length;
+  const goalsCard = `<section class="card section">
+      <div class="section-head" style="padding:0"><h2>${esc(monthName)} goals</h2>${g.items.length ? `<span class="small muted num">${gDone} of ${g.items.length} done</span>` : ''}</div>
+      ${g.items.length ? `<div>${g.items.map((x) => `<div class="goal ${x.done ? 'done' : ''}">
+          <button type="button" class="gtick" role="checkbox" aria-checked="${!!x.done}" data-goal="${esc(x.id)}" aria-label="${esc(x.text)}">✓</button>
+          <span class="gtext">${esc(x.text)}</span>
+          <button type="button" class="gdel" data-goal-del="${esc(x.id)}" aria-label="Remove goal: ${esc(x.text)}">✕</button></div>`).join('')}</div>`
+        : `<p class="small muted" style="margin:0">What do you want this month to be about? For example: run 4 times, lose 2 lb, try a new ballet class.</p>`}
+      ${g.items.length < 12 ? `<form class="row" id="goal-form" autocomplete="off"><input type="text" id="goal-input" class="grow" maxlength="120" placeholder="Add a goal for ${esc(monthName)}"><button type="submit" class="btn">Add</button></form>` : ''}
+    </section>`;
+
   const weekExtras = (x) => { const ws = weekStart(d); let n = 0; for (let i = 0; i < 7; i++) if (getDay(addDays(ws, i)).extras[x.id]) n++; return n; };
 
   app.innerHTML = `
@@ -513,9 +564,13 @@ function renderToday() {
           ${kcal ? `<span class="chip kcal num">${kcal.toLocaleString()} kcal</span>` : '<span class="chip">No food logged</span>'}
           ${mood ? `<span class="chip good">${mood.e} ${esc(mood.t)}</span>` : '<span class="chip">No check-in</span>'}
           ${day.weight ? `<span class="chip num">${day.weight} ${esc(config.unit)}</span>` : ''}
+          ${day.travel ? `<span class="chip good">✈️ ${esc(day.where || 'Traveling')}</span>` : ''}
           ${extrasDone.map((x) => `<span class="chip good">${esc(x.icon)} ${esc(x.name)}</span>`).join('')}
         </div></div>
     </section>
+
+    ${travelCard}
+    ${goalsCard}
 
     <section class="section">
       <div class="section-head"><span class="label">Daily habits</span></div>
@@ -686,7 +741,7 @@ function dayRows(n) {
   for (let i = n - 1; i >= 0; i--) {
     const d = addDays(t, -i), k = dkey(d), day = days[k];
     if (!day) continue;
-    const hasAny = Object.keys(day.habits).length || Object.keys(day.extras).length || day.food.length || day.feel.mood || day.weight;
+    const hasAny = Object.keys(day.habits).length || Object.keys(day.extras).length || day.food.length || day.feel.mood || day.weight || day.travel;
     if (!hasAny) continue;
     out.push({ d, k, day });
   }
@@ -697,12 +752,12 @@ function compareTable() {
   // Average mood/energy on days a habit was done vs. scheduled but not done.
   const rows = dayRows(60).filter((r) => r.day.feel.mood);
   const out = [];
-  const items = [...config.habits.map((h) => ({ ...h, kind: 'h' })), ...config.extras.map((x) => ({ ...x, kind: 'x' }))];
+  const items = [...config.habits.map((h) => ({ ...h, kind: 'h' })), ...config.extras.map((x) => ({ ...x, kind: 'x' })), { id: 'travel', icon: '✈️', name: 'Traveling', kind: 't' }];
   for (const h of items) {
     const yes = [], no = [];
     for (const r of rows) {
       if (h.kind === 'h' && !scheduled(h, r.d)) continue;
-      const did = h.kind === 'h' ? !!r.day.habits[h.id] : !!r.day.extras[h.id];
+      const did = h.kind === 'h' ? !!r.day.habits[h.id] : h.kind === 't' ? !!r.day.travel : !!r.day.extras[h.id];
       (did ? yes : no).push(r.day.feel.mood);
     }
     if (yes.length >= 3 && no.length >= 3) {
@@ -774,6 +829,7 @@ function renderInsights() {
     : aiBusy ? `<p class="thinking">Claude is reading your last 30 days… this can take up to a minute.</p><button type="button" class="btn sm" data-act="ai-stop">Stop</button>`
     : `${insights ? `<div class="ai-out">
           ${insights.summary ? `<p style="margin:0 0 6px">${esc(insights.summary)}</p>` : ''}
+          ${insights.goalProgress ? `<p style="margin:0 0 6px"><strong>Goals:</strong> ${esc(insights.goalProgress)}</p>` : ''}
           <div>${findings.map((x) => `<div class="finding ${x.direction === 'positive' ? 'positive' : x.direction === 'negative' ? 'negative' : ''}"><span class="dot" aria-hidden="true"></span><div><h3>${esc(x.title)}</h3><p>${esc(x.detail)}</p><span class="conf">${esc(x.confidence || '')} evidence</span></div></div>`).join('')}</div>
           ${Array.isArray(insights.suggestions) && insights.suggestions.length ? `<div class="label" style="margin-top:10px">Try this</div><ul>${insights.suggestions.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
           <p class="small muted" style="margin:10px 0 0">Based on ${insights.days || '?'} days · updated ${esc(insights.at ? new Date(insights.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '')}. Patterns, not medical advice.</p>
@@ -800,7 +856,7 @@ function renderInsights() {
       <div class="chips"><span class="chip num">${moodDays} check-ins</span><span class="chip kcal num">${avgKcal ? avgKcal.toLocaleString() + ' kcal avg/day' : 'No food logged'}</span><span class="chip num">${foodDays.length} days with food</span></div>
       ${cmp.length ? `<div class="scroll-x"><table class="compare"><thead><tr><th>Mood (1–5) when…</th><th>Done</th><th>Skipped</th><th>Diff</th></tr></thead><tbody>
         ${cmp.map((c) => `<tr><td>${esc(c.h.icon)} ${esc(c.h.name)}</td><td>${c.a.toFixed(1)}</td><td>${c.b.toFixed(1)}</td><td class="${c.diff > 0.15 ? 'up' : c.diff < -0.15 ? 'down' : ''}">${c.diff > 0 ? '+' : ''}${c.diff.toFixed(1)}</td></tr>`).join('')}
-      </tbody></table></div><p class="small muted" style="margin:0">Each habit needs at least 3 done days and 3 skipped days, each with a check-in. These are correlations, not causes.</p>`
+      </tbody></table></div><p class="small muted" style="margin:0">Each row needs at least 3 days with it and 3 without, each with a check-in. These are correlations, not causes.</p>`
       : `<p class="small muted" style="margin:0">After a week or two of check-ins, this table compares your mood on days you did each habit with days you skipped it.</p>`}
     </section>
 
@@ -815,7 +871,7 @@ function renderInsights() {
         <div class="t" style="text-align:center"><h2>${isThis ? 'This week' : esc(fmt(wdays[0], { month: 'short', day: 'numeric' }) + ' – ' + fmt(wdays[6], { month: 'short', day: 'numeric' }))}</h2><span class="small muted">Tap a square to fix a check-in</span></div>
         <button type="button" class="round" data-act="next-week" aria-label="Next week" ${isThis ? 'disabled' : ''}>›</button>
       </div>
-      <table class="grid7"><thead><tr><th></th>${wdays.map((d, i) => `<th class="${same(d, t) ? 'today' : ''}">${DAY_LETTERS[i]}<br>${d.getDate()}</th>`).join('')}</tr></thead>
+      <table class="grid7"><thead><tr><th></th>${wdays.map((d, i) => `<th class="${same(d, t) ? 'today' : ''}">${DAY_LETTERS[i]}<br>${d.getDate()}${isTravel(d) ? '<span class="tv" title="Traveling">✈️</span>' : ''}</th>`).join('')}</tr></thead>
         <tbody>${config.habits.map((h) => `<tr><td title="${esc(h.name)}">${esc(h.icon)}</td>${wdays.map((d) => cell(h, d)).join('')}</tr>`).join('')}</tbody></table>
     </section>
 
@@ -841,7 +897,7 @@ async function runInsights() {
     const food = day.food.map((f) => `${f.meal}: ${(f.text || 'photo').slice(0, 80)}${f.cal != null ? ` (${f.cal} kcal)` : ''}`);
     const f = day.feel || {};
     return [
-      `${k} (${fmt(d, { weekday: 'short' })})`,
+      `${k} (${fmt(d, { weekday: 'short' })})${day.travel ? ` TRAVELING${day.where ? ' in ' + day.where.slice(0, 40) : ''}` : ''}`,
       `done: ${doneH.join(', ') || 'none'}`,
       `missed: ${missed.join(', ') || 'none'}`,
       ex.length ? `extras: ${ex.join(', ')}` : '',
@@ -857,6 +913,8 @@ async function runInsights() {
 
 Their habits: ${config.habits.map((h) => `${h.name} (${schedLabel(h.schedule)})`).join('; ')}.
 Optional extras they track: ${config.extras.map((x) => x.name).join(', ') || 'none'}.
+Their goals for ${fmt(today(), { month: 'long' })}: ${getGoals(monthKey(today())).items.map((x) => `${x.text}${x.done ? ' (done)' : ''}`).join('; ') || 'none set'}.
+Days marked TRAVELING are away from home; their routine differs then, so don't treat travel-day misses as failures. Do compare how travel days and the days right after travel affect mood, energy, food and weight.
 
 LOG:
 ${lines.join('\n')}
@@ -864,7 +922,7 @@ ${lines.join('\n')}
 Find the most useful patterns linking habits, extras, food (what and how much), and next-day effects to mood, energy, feelings and weight. Look at same-day and next-day effects (e.g. sauna or a late heavy dinner affecting the next day). Be specific and cite numbers from the log (e.g. "mood averaged 4.2 on the 6 days you meditated vs 3.1 otherwise"). Only claim what the data supports; with few days, say evidence is weak. No medical claims. Write warmly and directly to the person ("you").
 
 Reply with only JSON:
-{"summary":"2 sentences max","findings":[{"title":"short headline","detail":"1-2 sentences with numbers","direction":"positive|negative|neutral","confidence":"strong|moderate|weak"}],"suggestions":["concrete, small next step", "..."]}
+{"summary":"2 sentences max","goalProgress":"1-2 sentences on how the log suggests their monthly goals are going, or empty if none set","findings":[{"title":"short headline","detail":"1-2 sentences with numbers","direction":"positive|negative|neutral","confidence":"strong|moderate|weak"}],"suggestions":["concrete, small next step", "..."]}
 Give 3-6 findings and 2-3 suggestions.`;
 
   aiBusy = true; aiCtl = new AbortController(); render();
@@ -873,6 +931,7 @@ Give 3-6 findings and 2-3 suggestions.`;
     if (!r || !Array.isArray(r.findings)) throw { code: 'invalid_json' };
     insights = {
       summary: String(r.summary || '').slice(0, 600),
+      goalProgress: String(r.goalProgress || '').slice(0, 500),
       findings: r.findings.slice(0, 8).map((x) => ({ title: String(x.title || '').slice(0, 120), detail: String(x.detail || '').slice(0, 500), direction: String(x.direction || 'neutral'), confidence: String(x.confidence || '') })),
       suggestions: Array.isArray(r.suggestions) ? r.suggestions.slice(0, 4).map((s) => String(s).slice(0, 240)) : [],
       days: rows.length, at: new Date().toISOString(),
@@ -1008,6 +1067,8 @@ app.addEventListener('click', (e) => {
     else { const [k, id] = key.split(':'); if (k === 'h') config.habits = config.habits.filter((x) => x.id !== id); else config.extras = config.extras.filter((x) => x.id !== id); toast('Deleted'); }
     confirmDelete = null; saveConfig(); render(); return;
   }
+  if (ds.goal) { editGoals(monthKey(cursor), (g) => { const x = g.items.find((y) => y.id === ds.goal); if (x) x.done = !x.done; }); render(); return; }
+  if (ds.goalDel) { editGoals(monthKey(cursor), (g) => { g.items = g.items.filter((y) => y.id !== ds.goalDel); }); render(); return; }
   if (ds.suggest) { const s = SUGGESTIONS.find((x) => x.id === ds.suggest); if (s) { config.habits.push({ id: s.id, name: s.name, icon: s.icon, schedule: structuredClone(s.schedule) }); saveConfig(); render(); toast(`Added ${s.name}`); } return; }
 
   const foodId = b.closest('[data-food]')?.dataset.food;
@@ -1030,6 +1091,11 @@ app.addEventListener('click', (e) => {
       break;
     }
     case 'food-cancel': render(); break;
+    case 'travel-toggle': {
+      const ytd = getDay(addDays(cursor, -1));
+      editDay(cursor, (d) => { d.travel = !d.travel; if (d.travel && !d.where && ytd.travel) d.where = ytd.where || ''; });
+      render(); break;
+    }
     case 'weight-clear': editDay(cursor, (d) => { d.weight = null; }); render(); break;
     case 'ai-run': runInsights(); break;
     case 'ai-stop': aiCtl?.abort(); break;
@@ -1062,6 +1128,11 @@ app.addEventListener('submit', (e) => {
     editDay(cursor, (d) => { const f = d.food.find((x) => x.id === id); if (f) { f.cal = v === '' ? null : Math.max(0, Math.round(Number(v))); f.estimated = false; } });
     render(); return;
   }
+  if (form.id === 'goal-form') {
+    const text = document.getElementById('goal-input').value.trim(); if (!text) return;
+    editGoals(monthKey(cursor), (g) => g.items.push({ id: 'g' + uid(), text: text.slice(0, 120), done: false }));
+    render(); setTimeout(() => document.getElementById('goal-input')?.focus(), 0); return;
+  }
   if (form.id === 'weight-form') {
     const v = parseFloat(document.getElementById('weight-input').value);
     if (!Number.isFinite(v) || v < 20 || v > 700) { toast('Enter a weight between 20 and 700.'); return; }
@@ -1084,6 +1155,7 @@ app.addEventListener('input', (e) => {
 });
 
 app.addEventListener('change', (e) => {
+  if (e.target.id === 'travel-where') { const v = e.target.value.trim().slice(0, 60); editDay(cursor, (d) => { d.where = v; }); render(); return; }
   if (e.target.id === 'food-photo' && e.target.files[0]) {
     foodDraft.photo = e.target.files[0];
     foodDraft.text = document.getElementById('food-text').value;

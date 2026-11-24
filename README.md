@@ -6,7 +6,7 @@ A personal daily tracker for habits, extras, food, mood and weight. Claude estim
 
 ## Tabs
 
-- **Today:** check off daily habits (with streaks), and tap extras such as Stretch Lab, sauna or ballet when you do them. Extras are never counted as missed.
+- **Today:** check off daily habits (with streaks), and tap extras such as Stretch Lab, sauna or ballet when you do them. Extras are never counted as missed. Mark travel days (with an optional place); on those days a missed habit doesn't break a streak. Write goals for the month and check them off.
 - **Food:** describe a meal, or add a photo, and Claude estimates calories and protein. You can edit any number yourself.
 - **Check-in:** rate mood and energy (1–5), tap feeling tags, write notes, and log your weight (lb or kg).
 - **Insights:** Claude reads your last 30 days and points out patterns. The tab also has a done-vs-skipped mood table, a weight trend chart, a weekly grid for fixing missed check-ins, and streaks.
@@ -22,7 +22,7 @@ A personal daily tracker for habits, extras, food, mood and weight. Claude estim
 
 `index.html` is a single-file page published as a Claude artifact. It uses these artifact runtime capabilities:
 
-- `db` + `user`: each day is one private document under `data/users/<id>/YYYY-MM-DD`, plus `config` and `insights` documents. Data syncs across devices and only the signed-in owner can read it.
+- `db` + `user`: each day is one private document under `data/users/<id>/YYYY-MM-DD`, plus `goals-YYYY-MM`, `config` and `insights` documents. Data syncs across devices and only the signed-in owner can read it.
 - `sample` (with images): calorie estimates and pattern insights. These run on the viewer's own Claude account.
 
 Opened outside Claude, the page falls back to browser storage and manual calorie entry.
