@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Habits</title>
+  <meta name="description" content="A simple daily habits tracker that works offline.">
+  <meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141312" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Habits">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app" aria-live="polite"></main>
+
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab" data-view="today" type="button"><span aria-hidden="true">☀️</span>Today</button>
+    <button class="tab" data-view="progress" type="button"><span aria-hidden="true">📈</span>Progress</button>
+    <button class="tab" data-view="manage" type="button"><span aria-hidden="true">⚙️</span>Habits</button>
+  </nav>
+
+  <dialog id="habit-dialog">
+    <form method="dialog" id="habit-form">
+      <h2 id="dialog-title">Add habit</h2>
+      <label>Name
+        <input name="name" required maxlength="60" autocomplete="off" placeholder="e.g. Drink water">
+      </label>
+      <label>Emoji
+        <input name="icon" maxlength="8" autocomplete="off" placeholder="✅">
+      </label>
+      <label>How often
+        <select name="type">
+          <option value="daily">Every day</option>
+          <option value="weekdays">Weekdays only (Mon–Fri)</option>
+          <option value="weekly">A number of times per week</option>
+        </select>
+      </label>
+      <label class="times-field">Times per week
+        <input name="times" type="number" min="1" max="7" value="1">
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" id="dialog-cancel">Cancel</button>
+        <button type="submit" class="btn primary" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
