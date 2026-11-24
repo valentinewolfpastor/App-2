@@ -1,36 +1,30 @@
-# Daily Habits
+# Daily Rhythm
 
-A simple daily habit tracker that works offline. It's a plain HTML/CSS/JS app with no build step and no account. Your data stays in your browser.
+A personal daily tracker for habits, extras, food, mood and weight. Claude estimates calories and finds patterns between what you do, what you eat and how you feel.
 
-## Features
+**Live app:** https://claude.ai/artifact/9cZ21xQ7GeJ6zrV8511QMT (private to the owner)
 
-- **Today:** tap each habit as you do it. A ring shows how much of the day is done, and streaks show next to each habit. Use ‹ › to go back and log earlier days.
-- **Three kinds of schedule:**
-  - *Every day*
-  - *Weekdays only*, e.g. no sugar during the workweek. Weekends don't break the streak.
-  - *N times per week*, e.g. run once a week. The streak counts in weeks.
-- **Progress:** a weekly grid (tap a square to fix a missed check-in), plus your current streak, best streak and recent consistency for each habit.
-- **Habits:** add, edit, reorder or delete habits, and add habits from the suggestions with one tap.
-- **Backup:** export or import your data as a JSON file, to move it between devices.
-- **Installable:** add it to your home screen and it works offline. Supports dark mode.
+## Tabs
 
-## Run it
+- **Today:** check off daily habits (with streaks), and tap extras such as Stretch Lab, sauna or ballet when you do them. Extras are never counted as missed.
+- **Food:** describe a meal, or add a photo, and Claude estimates calories and protein. You can edit any number yourself.
+- **Check-in:** rate mood and energy (1–5), tap feeling tags, write notes, and log your weight (lb or kg).
+- **Insights:** Claude reads your last 30 days and points out patterns. The tab also has a done-vs-skipped mood table, a weight trend chart, a weekly grid for fixing missed check-ins, and streaks.
+- **Habits:** add, edit, reorder or delete habits and extras, and add suggested habits.
 
-```sh
-python3 -m http.server 8000
-# open http://localhost:8000
-```
+## Schedules
 
-To use it on your phone, host the folder on any static host (for example GitHub Pages). Open it in Safari, then choose Share → Add to Home Screen.
+- *Every day*
+- *Weekdays only*, e.g. no sugar, or no alcohol on weeknights. Weekends never break the streak.
+- *N times per week*, e.g. run once a week. The streak counts in weeks.
 
-## Files
+## How it works
 
-| File | Purpose |
-| --- | --- |
-| `index.html` | App shell, tab bar, add/edit dialog |
-| `styles.css` | Styles (light and dark) |
-| `app.js` | Habits, schedules, streaks, rendering, storage |
-| `sw.js` | Service worker for offline use |
-| `manifest.webmanifest`, `icons/` | Home-screen install |
+`index.html` is a single-file page published as a Claude artifact. It uses these artifact runtime capabilities:
 
-Default habits and suggestions are defined at the top of `app.js`.
+- `db` + `user`: each day is one private document under `data/users/<id>/YYYY-MM-DD`, plus `config` and `insights` documents. Data syncs across devices and only the signed-in owner can read it.
+- `sample` (with images): calorie estimates and pattern insights. These run on the viewer's own Claude account.
+
+Opened outside Claude, the page falls back to browser storage and manual calorie entry.
+
+To update the live app, edit `index.html` and republish it to the same artifact URL.
