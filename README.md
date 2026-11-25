@@ -28,3 +28,7 @@ A personal daily tracker for habits, extras, food, mood and weight. Claude estim
 Opened outside Claude, the page falls back to browser storage and manual calorie entry.
 
 To update the live app, edit `index.html` and republish it to the same artifact URL.
+
+## Other apps
+
+- [Bead Studio](bead-studio/): bead-weaving pattern designer.

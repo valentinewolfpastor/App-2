@@ -1,0 +1,1295 @@
+<title>Bead Pattern Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a bead-board workbench. Tools on the left, the chart in the middle, and a tray of
+   colours, counts and row-by-row instructions on the right. Stacks into one column on phones. */
+:root {
+  --bg: #f6f4f7;
+  --surface: #ffffff;
+  --sunken: #f0ecf2;
+  --ink: #241c27;
+  --muted: #6e6474;
+  --line: #e3dde6;
+  --grid: #9b939f;
+  --accent: #6a3a76;
+  --accent-ink: #ffffff;
+  --accent-soft: #efe3f3;
+  --tag: #6f5f73;
+  --tag-ink: #ffffff;
+  --danger: #b4232f;
+  --ok: #2f7a4b;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161219; --surface: #201a24; --sunken: #2a2230; --ink: #f1ebf3; --muted: #a99eae;
+    --line: #362d3b; --grid: #625867; --accent: #c99ad8; --accent-ink: #1d1420; --accent-soft: #3a2a42;
+    --tag: #4d4152; --tag-ink: #f1ebf3; --danger: #ff7b84; --ok: #6fd296; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161219; --surface: #201a24; --sunken: #2a2230; --ink: #f1ebf3; --muted: #a99eae;
+  --line: #362d3b; --grid: #625867; --accent: #c99ad8; --accent-ink: #1d1420; --accent-soft: #3a2a42;
+  --tag: #4d4152; --tag-ink: #f1ebf3; --danger: #ff7b84; --ok: #6fd296; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--font-body); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
+
+/* Header */
+.top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 750; font-size: 19px; letter-spacing: -.01em; white-space: nowrap; }
+.brand svg { width: 30px; height: 30px; }
+.name-wrap { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
+#patName { border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 4px 8px; font-weight: 600; font-size: 16px; width: 100%; min-width: 0; }
+#patName:hover, #patName:focus { border-color: var(--line); background: var(--surface); }
+#saveState { font-size: 12px; color: var(--muted); padding-left: 9px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.btn:hover { border-color: var(--grid); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--danger); }
+.btn svg { width: 18px; height: 18px; }
+
+/* Workbench */
+.work { display: grid; grid-template-columns: auto minmax(0, 1fr) 340px; gap: 12px; min-height: 0; }
+.tools { display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; overflow: auto; }
+.tool { width: 48px; height: 48px; border-radius: 10px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; color: var(--ink); position: relative; }
+.tool svg { width: 22px; height: 22px; }
+.tool:hover { background: var(--sunken); }
+.tool[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.tool:disabled { opacity: .35; cursor: default; }
+.tool .lbl { position: absolute; bottom: 2px; left: 0; right: 0; font-size: 9px; font-weight: 600; text-align: center; color: var(--muted); }
+.tools hr { border: 0; border-top: 1px solid var(--line); margin: 2px 4px; width: auto; }
+.cur-chip { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--line); display: grid; place-items: center; }
+.cur-chip span { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.35); border: 1px solid rgba(0,0,0,.2); }
+
+.stage { min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.scroller { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+.scroller-inner { display: grid; place-items: center; min-width: 100%; min-height: 100%; width: max-content; padding: 12px; }
+#board { display: block; touch-action: none; }
+.stagebar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.stagebar b { color: var(--ink); font-weight: 600; }
+.stagebar .spacer { flex: 1; }
+.zoom { display: flex; align-items: center; gap: 4px; }
+.zoom button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 16px; }
+
+.side { min-height: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+.tab { border: 0; background: transparent; padding: 12px 4px 10px; font-weight: 600; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.panel { flex: 1; min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.panel h3 { font-size: 15px; font-weight: 700; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+
+/* Colours */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.sw { aspect-ratio: 1; max-width: 100%; border-radius: 10px; border: 2px solid transparent; background: var(--sunken); display: grid; place-items: center; padding: 0; position: relative; }
+.sw .bead { width: 70%; height: 70%; border-radius: 50%; border: 1px solid rgba(0,0,0,.22); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), inset 2px 2px 0 rgba(255,255,255,.35); }
+.sw[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.sw .n { position: absolute; right: 2px; bottom: 0; font-size: 9.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw.add { color: var(--muted); font-size: 22px; font-weight: 400; border: 1.5px dashed var(--line); background: transparent; }
+.editor { display: grid; gap: 8px; background: var(--sunken); border-radius: 12px; padding: 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row > * { min-width: 0; }
+.field { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.field input[type=text], .field input[type=number], .field select, .input { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 8px 10px; font-size: 14px; color: var(--ink); font-weight: 500; width: 100%; min-height: 40px; }
+input[type=color] { width: 48px; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); padding: 3px; }
+input[type=range] { accent-color: var(--accent); width: 100%; }
+input[type=checkbox] { accent-color: var(--accent); width: 18px; height: 18px; }
+
+/* Counts */
+.stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat { background: var(--sunken); border-radius: 12px; padding: 10px 12px; }
+.stat .v { font-family: var(--font-display); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: 12px; color: var(--muted); }
+table.counts { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.counts th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 4px 4px 6px; border-bottom: 1px solid var(--line); }
+table.counts td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.counts td.num, table.counts th.num { text-align: right; }
+.dot { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(0,0,0,.22); vertical-align: -3px; margin-right: 6px; box-shadow: inset 0 -2px 0 rgba(0,0,0,.15); }
+.note { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+
+/* Rows */
+.tracker { display: grid; gap: 10px; background: var(--sunken); border-radius: 12px; padding: 12px; }
+.tracker .big { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+.runs { display: flex; flex-wrap: wrap; gap: 5px; }
+.run { display: inline-flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px 3px 4px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.run .dot { margin: 0; width: 14px; height: 14px; }
+.run.skip { border-style: dashed; color: var(--muted); padding-left: 9px; }
+.rowlist { display: grid; gap: 2px; }
+.rowitem { display: grid; grid-template-columns: 66px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 6px; border-radius: 10px; border: 1px solid transparent; background: transparent; text-align: left; width: 100%; }
+.rowitem:hover { background: var(--sunken); }
+.rowitem.current { border-color: var(--accent); background: var(--accent-soft); }
+.rowitem.done { opacity: .5; }
+.rowitem .rn { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rowitem .rn small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
+
+.tips { display: grid; gap: 12px; }
+.tips details { background: var(--sunken); border-radius: 12px; padding: 10px 12px; }
+.tips summary { font-weight: 650; cursor: pointer; }
+.tips p, .tips ul { margin: 8px 0 0; color: var(--ink); }
+.tips ul { padding-left: 18px; }
+.tips li { margin-bottom: 4px; }
+
+/* Dialogs */
+dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--surface); color: var(--ink); width: min(620px, calc(100vw - 32px)); max-height: calc(100% - 32px); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+dialog::backdrop { background: rgba(20, 12, 24, .45); }
+.dlg { display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); gap: 10px; }
+.dlg-head h2 { font-size: 19px; }
+.dlg-body { padding: 16px 18px; overflow: auto; display: grid; gap: 16px; }
+.dlg-foot { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.x { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 18px; line-height: 1; }
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.choice { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px; background: var(--surface); text-align: left; display: grid; gap: 6px; }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice canvas { width: 100%; height: 58px; }
+.choice b { font-size: 14px; }
+.choice span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.patlist { display: grid; gap: 8px; }
+.pat { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+.pat.open { border-color: var(--accent); }
+.pat img { width: 72px; height: 72px; object-fit: contain; background: var(--sunken); border-radius: 8px; }
+.pat .t { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pat .acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.pat .acts .btn { min-height: 34px; padding: 6px 10px; font-size: 12.5px; }
+#exportImg { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+#photoPreview { width: 100%; height: auto; image-rendering: pixelated; border-radius: 10px; background: var(--sunken); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 13px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 1100px) { .work { grid-template-columns: auto minmax(0, 1fr) 300px; } }
+@media (max-width: 860px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  .work { grid-template-columns: minmax(0, 1fr); }
+  .tools { flex-direction: row; flex-wrap: wrap; }
+  .tools hr { border-top: 0; border-left: 1px solid var(--line); margin: 4px 2px; }
+  .stage { height: 64vh; }
+  .side { max-height: none; overflow: visible; }
+  .panel { overflow: visible; }
+  .choices { grid-template-columns: minmax(0, 1fr); }
+  .choice { grid-template-columns: 110px minmax(0, 1fr); align-items: center; }
+  .choice canvas { grid-row: span 2; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand" aria-label="Bead Pattern Studio">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="6" fill="#c2202e"/><circle cx="16" cy="9" r="6" fill="#f4b23c"/><circle cx="23" cy="16" r="6" fill="#2bb3b1"/><circle cx="16" cy="23" r="6" fill="#6a3a76"/><circle cx="7.5" cy="14" r="1.6" fill="#fff" opacity=".6"/><circle cx="14.5" cy="7" r="1.6" fill="#fff" opacity=".6"/><circle cx="21.5" cy="14" r="1.6" fill="#fff" opacity=".6"/><circle cx="14.5" cy="21" r="1.6" fill="#fff" opacity=".6"/></svg>
+      Bead Studio
+    </div>
+    <div class="name-wrap">
+      <input id="patName" type="text" aria-label="Pattern name" value="">
+      <span id="saveState">Not saved yet</span>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnNew"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New</button>
+      <button class="btn" id="btnList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>My patterns</button>
+      <button class="btn" id="btnSetup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Grid &amp; beads</button>
+      <button class="btn" id="btnPhoto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>Photo</button>
+      <button class="btn primary" id="btnExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Export</button>
+    </div>
+  </header>
+
+  <div class="work">
+    <nav class="tools" aria-label="Tools">
+      <div class="cur-chip" title="Current colour"><span id="curChip"></span></div>
+      <hr>
+      <button class="tool" data-tool="draw" aria-pressed="true" title="Bead (B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l4-1L19 8l-3-3L5 16l-1 4z"/><path d="M14 7l3 3"/></svg><span class="lbl">Bead</span></button>
+      <button class="tool" data-tool="erase" aria-pressed="false" title="Remove bead (E)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 20h11"/><path d="M4.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19H8z"/><path d="M9 11l5 5"/></svg><span class="lbl">Remove</span></button>
+      <button class="tool" data-tool="fill" aria-pressed="false" title="Fill area (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 11l7-7 7 7-7 7z"/><path d="M4 11h14"/><path d="M20 15s1.8 2.3 1.8 3.6a1.8 1.8 0 0 1-3.6 0c0-1.3 1.8-3.6 1.8-3.6z"/></svg><span class="lbl">Fill</span></button>
+      <button class="tool" data-tool="pick" aria-pressed="false" title="Pick a colour from the chart (I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M14.5 4.5a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3L17 12l-5-5z"/><path d="M12 7l-7 7v3l-1 3 3-1h3l7-7"/></svg><span class="lbl">Pick</span></button>
+      <button class="tool" data-tool="pan" aria-pressed="false" title="Move around (space)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span class="lbl">Move</span></button>
+      <hr>
+      <button class="tool" id="btnMirror" aria-pressed="false" title="Mirror drawing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18" stroke-dasharray="2 2.5"/><path d="M8 7L3 17h5zM16 7l5 10h-5z"/></svg><span class="lbl" id="mirrorLbl">Mirror</span></button>
+      <button class="tool" id="btnUndo" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="lbl">Undo</span></button>
+      <button class="tool" id="btnRedo" title="Redo (Ctrl+Shift+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg><span class="lbl">Redo</span></button>
+    </nav>
+
+    <section class="stage" aria-label="Pattern chart">
+      <div class="scroller" id="scroller"><div class="scroller-inner"><canvas id="board" aria-label="Bead chart. Tap beads to colour them."></canvas></div></div>
+      <div class="stagebar">
+        <span id="hoverInfo">Tap a bead to colour it</span>
+        <span id="dimInfo"></span>
+        <span class="spacer"></span>
+        <div class="zoom"><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomFit" aria-label="Fit to screen" style="width:auto;padding:0 10px;font-size:12.5px">Fit</button><button id="zoomIn" aria-label="Zoom in">+</button></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="colors" aria-selected="true">Colours</button>
+        <button class="tab" role="tab" data-tab="count" aria-selected="false">Bead count</button>
+        <button class="tab" role="tab" data-tab="rows" aria-selected="false">Rows</button>
+        <button class="tab" role="tab" data-tab="tips" aria-selected="false">Tips</button>
+      </div>
+
+      <div class="panel" data-panel="colors">
+        <div class="swatches" id="swatches"></div>
+        <div class="editor" id="editor">
+          <div class="eyebrow">Selected colour</div>
+          <div class="row">
+            <input type="color" id="edHex" aria-label="Colour">
+            <input class="input" type="text" id="edName" aria-label="Colour name" style="flex:1">
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="edReplace">Swap all beads to…</button>
+            <button class="btn ghost danger" id="edDelete">Delete colour</button>
+          </div>
+          <div class="small muted" id="edHint"></div>
+        </div>
+        <p class="small muted" style="margin:0">Tip: give each colour the name or number printed on your bead tube (for example “DB-0010 Black”). The shopping list will use it.</p>
+      </div>
+
+      <div class="panel" data-panel="count" hidden>
+        <div class="stat-row">
+          <div class="stat"><div class="v" id="stTotal">0</div><div class="k">beads in total</div></div>
+          <div class="stat"><div class="v" id="stColors">0</div><div class="k">colours used</div></div>
+          <div class="stat"><div class="v" id="stSize">–</div><div class="k">finished size</div></div>
+          <div class="stat"><div class="v" id="stBuy">–</div><div class="k" id="stBuyK">to buy</div></div>
+        </div>
+        <table class="counts"><thead><tr><th>Colour</th><th class="num">Beads</th><th class="num">+10%</th><th class="num" id="thBuy">Buy</th></tr></thead><tbody id="countBody"></tbody></table>
+        <div class="note" id="countNote"></div>
+        <button class="btn" id="copyList">Copy shopping list</button>
+      </div>
+
+      <div class="panel" data-panel="rows" hidden>
+        <div class="tracker">
+          <div class="eyebrow" id="trkEyebrow">Now beading</div>
+          <div class="big" id="trkTitle">Row 1</div>
+          <div class="runs" id="trkRuns"></div>
+          <div class="small muted" id="trkHint"></div>
+          <div class="row">
+            <button class="btn" id="trkPrev">Back</button>
+            <button class="btn primary" id="trkNext" style="flex:1">Row done, next</button>
+          </div>
+        </div>
+        <div class="row" style="justify-content:space-between"><h3>Row-by-row guide</h3><button class="btn ghost" id="copyRows">Copy</button></div>
+        <div class="rowlist" id="rowList"></div>
+        <button class="btn ghost" id="trkReset">Reset progress</button>
+      </div>
+
+      <div class="panel" data-panel="tips" hidden>
+        <div class="tips">
+          <details open><summary>Which layout should I choose?</summary>
+            <ul>
+              <li><b>Loom / square stitch</b>: beads sit in straight rows and columns, like the chart you sent. Easiest to read. Great for bracelets and bookmarks on a bead loom.</li>
+              <li><b>Peyote</b>: every other column sits half a bead lower. Makes a flexible fabric with no loom. Good for bracelets and wrapped tubes.</li>
+              <li><b>Brick stitch</b>: every other row shifts half a bead sideways. Popular for earrings and shaped motifs like fringe earrings.</li>
+            </ul></details>
+          <details><summary>Picking bead sizes</summary>
+            <p>Seed beads are sized by a number with “/0”: the bigger the number, the smaller the bead. 11/0 is the most common. Cylinder beads (Miyuki Delica) are very even, so pictures come out crisp; that's why most patterns use them. Round seed beads give a softer, more textured look. Pearls are great for loom or brick work with a few large beads.</p></details>
+          <details><summary>How much to buy</summary>
+            <p>The Bead count tab adds 10% to every colour. Some beads are misshapen, some roll away, and dye lots can differ, so buy everything for one project at the same time. Small tubes are often 5–8 g.</p></details>
+          <details><summary>Thread and needles</summary>
+            <ul>
+              <li>Use beading thread (Nymo, KO, One-G) or braided line (FireLine 4–6 lb) for 11/0 beads.</li>
+              <li>Use a size 10 or 12 beading needle for 11/0 beads, and size 13 for 15/0.</li>
+              <li>Work with about an arm's length (1–1.5 m) of thread at a time. Longer thread tangles.</li>
+              <li>Leave a 15–20 cm tail at the start so you can weave it in later.</li>
+            </ul></details>
+          <details><summary>Using this app while you bead</summary>
+            <ul>
+              <li>Open the <b>Rows</b> tab. The current row is outlined on the chart and the colours are listed in reading order (“3 Red, 2 White…”).</li>
+              <li>Tap <b>Row done, next</b> after each row. Finished rows fade on the chart, and your place is saved.</li>
+              <li>In peyote, string rows 1 and 2 together at the start, then add one row at a time.</li>
+              <li>Brick stitch is usually worked from the longest row outward. Start your tracker wherever you start.</li>
+            </ul></details>
+          <details><summary>Drawing shortcuts</summary>
+            <ul>
+              <li>Drag with one finger to colour many beads. Pinch with two fingers to zoom.</li>
+              <li><b>Mirror</b> copies what you draw to the other side, which is handy for hearts, flowers and symmetric earrings.</li>
+              <li><b>Fill</b> colours a whole area of the same colour, like a background.</li>
+              <li><b>Photo</b> turns a picture into a starting pattern with the number of colours you choose.</li>
+            </ul></details>
+          <details><summary>Common beginner mistakes</summary>
+            <ul>
+              <li>Thread tension too loose: pull each stitch snug but not tight enough to buckle the work.</li>
+              <li>Losing your place: use the row tracker and a bead mat so beads don't roll.</li>
+              <li>Too many colours: start with 3–5 colours and a small grid (around 20 × 20).</li>
+            </ul></details>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- New pattern / grid settings -->
+<dialog id="dlgSetup"><form class="dlg" method="dialog" id="setupForm">
+  <div class="dlg-head"><h2 id="setupTitle">New pattern</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="dlg-body">
+    <label class="field" id="setupNameField">Name<input type="text" id="sName" value="My pattern"></label>
+    <div class="field">Layout (how the beads sit)
+      <div class="choices" id="layoutChoices">
+        <button type="button" class="choice" data-layout="loom"><canvas width="220" height="116"></canvas><b>Loom / square</b><span>Straight rows and columns</span></button>
+        <button type="button" class="choice" data-layout="peyote"><canvas width="220" height="116"></canvas><b>Peyote</b><span>Columns offset by half a bead</span></button>
+        <button type="button" class="choice" data-layout="brick"><canvas width="220" height="116"></canvas><b>Brick stitch</b><span>Rows offset by half a bead</span></button>
+      </div>
+    </div>
+    <div class="grid2">
+      <label class="field">Bead type and size<select id="sSize"></select></label>
+      <label class="field">Bead shape on the chart<select id="sShape">
+        <option value="cyl">Cylinder (Delica)</option><option value="round">Round seed bead</option><option value="pearl">Pearl</option><option value="square">Square bead</option></select></label>
+      <label class="field">Beads across (columns)<input type="number" id="sCols" min="2" max="150" value="30"></label>
+      <label class="field">Rows<input type="number" id="sRows" min="2" max="200" value="30"></label>
+    </div>
+    <label class="field" id="sBgField">Start with<select id="sBg"></select></label>
+    <div class="note small" id="sizeNote"></div>
+  </div>
+  <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="setupOk">Create pattern</button></div>
+</form></dialog>
+
+<!-- Pattern list -->
+<dialog id="dlgList"><div class="dlg">
+  <div class="dlg-head"><h2>My patterns</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="dlg-body"><div class="patlist" id="patList"></div><p class="small muted" id="listNote" style="margin:0"></p></div>
+</div></dialog>
+
+<!-- Export -->
+<dialog id="dlgExport"><div class="dlg">
+  <div class="dlg-head"><h2>Export pattern</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="dlg-body">
+    <img id="exportImg" alt="Pattern chart with colour key">
+    <p class="small muted" id="exportHint" style="margin:0"></p>
+  </div>
+  <div class="dlg-foot"><button class="btn" id="exCopy">Copy row guide as text</button><button class="btn primary" id="exSave">Save image</button></div>
+</div></dialog>
+
+<!-- Photo -->
+<dialog id="dlgPhoto"><div class="dlg">
+  <div class="dlg-head"><h2>Turn a photo into a pattern</h2><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="dlg-body">
+    <label class="field">Choose a photo or drawing<input type="file" id="phFile" accept="image/*" class="input"></label>
+    <div class="grid2">
+      <label class="field">Number of colours: <span id="phKLbl">6</span><input type="range" id="phK" min="2" max="16" value="6"></label>
+      <label class="field" style="align-content:end"><span class="row" style="gap:8px;color:var(--ink)"><input type="checkbox" id="phUsePal"> Use my current colours</span></label>
+    </div>
+    <canvas id="photoPreview" width="10" height="10"></canvas>
+    <p class="small muted" style="margin:0">The photo is fitted to your grid (<span id="phDims"></span>). Simple pictures with bold shapes work best. You can touch up any bead afterwards, and Undo brings back your old pattern.</p>
+  </div>
+  <div class="dlg-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="phApply" disabled>Use this pattern</button></div>
+</div></dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const CH = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const MAX_COLORS = CH.length;
+const LS_KEY = 'bead-studio:patterns', LS_LAST = 'bead-studio:last';
+
+const SIZES = {
+  s15: { label: '15/0 seed beads (tiny)', len: 1.0, dia: 1.5, perGram: 250, shape: 'round' },
+  s11: { label: '11/0 seed beads', len: 1.4, dia: 2.0, perGram: 110, shape: 'round' },
+  d11: { label: '11/0 Delica cylinder', len: 1.3, dia: 1.6, perGram: 200, shape: 'cyl' },
+  d10: { label: '10/0 Delica cylinder', len: 1.7, dia: 2.2, perGram: 100, shape: 'cyl' },
+  s8:  { label: '8/0 seed beads', len: 2.2, dia: 3.0, perGram: 38, shape: 'round' },
+  s6:  { label: '6/0 seed beads (large)', len: 3.0, dia: 4.0, perGram: 13, shape: 'round' },
+  p4:  { label: '4 mm pearls', len: 4, dia: 4, perStrand: 100, shape: 'pearl' },
+  p6:  { label: '6 mm pearls', len: 6, dia: 6, perStrand: 67, shape: 'pearl' },
+  p8:  { label: '8 mm pearls', len: 8, dia: 8, perStrand: 50, shape: 'pearl' },
+};
+const LAYOUT_NAMES = { loom: 'Loom / square', peyote: 'Peyote', brick: 'Brick stitch' };
+const DEFAULT_PALETTE = [
+  ['Chalk White', '#f4f2ee'], ['Jet Black', '#1c1b1f'], ['Cherry Red', '#c2202e'], ['Coral', '#f0735a'],
+  ['Marigold', '#f4b23c'], ['Lemon', '#f6e05a'], ['Leaf Green', '#4c9a4a'], ['Mint', '#9fd8b7'],
+  ['Turquoise', '#2bb3b1'], ['Cobalt', '#2c4fa3'], ['Sky Blue', '#8cc4ec'], ['Lilac', '#b79ad6'],
+  ['Plum', '#6a3a76'], ['Bubblegum', '#f29bbf'], ['Chocolate', '#6b4429'], ['Sand', '#d9c2a0'],
+  ['Silver Grey', '#a7a9ad'], ['Gold', '#c9a24a'],
+].map(([name, hex]) => ({ name, hex }));
+
+/* ---------- state ---------- */
+let P = null;              // current pattern
+let tool = 'draw', cur = 2, mirror = 'none', zoom = 28, activeTab = 'colors';
+let undoStack = [], redoStack = [];
+let store = { mode: 'device', db: null, uid: null, list: new Map() };
+let dirty = false, saveTimer = null, saving = false, saveAgain = false;
+let downloads = null;
+let pendingDelete = null, replaceMode = false;
+
+const uid = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+function newPattern(o) {
+  const p = {
+    id: uid(), name: o.name || 'My pattern', layout: o.layout || 'loom', size: o.size || 'd11',
+    shape: o.shape || 'cyl', cols: o.cols || 30, rows: o.rows || 30,
+    palette: (o.palette || DEFAULT_PALETTE).map(c => ({ ...c })), progress: 0,
+    created: Date.now(), updated: Date.now(), example: !!o.example,
+  };
+  p.cells = new Int16Array(p.cols * p.rows).fill(o.bg ?? -1);
+  return p;
+}
+function serialize(p) {
+  let s = '';
+  for (const v of p.cells) s += v < 0 ? '.' : CH[v];
+  return { v: 1, name: p.name, layout: p.layout, size: p.size, shape: p.shape, cols: p.cols, rows: p.rows,
+    palette: p.palette.map(c => ({ name: c.name, hex: c.hex })), cells: s, progress: p.progress,
+    created: p.created, updated: p.updated, example: !!p.example };
+}
+function deserialize(id, d) {
+  if (!d || typeof d.cells !== 'string') return null;
+  const cols = clamp(d.cols | 0, 2, 150), rows = clamp(d.rows | 0, 2, 200);
+  const palette = Array.isArray(d.palette) ? d.palette.slice(0, MAX_COLORS).map(c => ({
+    name: String(c?.name ?? 'Colour').slice(0, 60), hex: /^#[0-9a-f]{6}$/i.test(c?.hex) ? c.hex : '#888888' })) : DEFAULT_PALETTE.slice();
+  const p = { id, name: String(d.name || 'Untitled').slice(0, 80), layout: LAYOUT_NAMES[d.layout] ? d.layout : 'loom',
+    size: SIZES[d.size] ? d.size : 'd11', shape: ['cyl', 'round', 'pearl', 'square'].includes(d.shape) ? d.shape : 'cyl',
+    cols, rows, palette, progress: d.progress | 0, created: +d.created || Date.now(), updated: +d.updated || Date.now(), example: !!d.example };
+  p.cells = new Int16Array(cols * rows).fill(-1);
+  for (let i = 0; i < Math.min(d.cells.length, p.cells.length); i++) {
+    const ch = d.cells[i]; if (ch === '.') continue;
+    const v = CH.indexOf(ch); p.cells[i] = v >= 0 && v < palette.length ? v : -1;
+  }
+  return p;
+}
+
+function examplePattern() {
+  const p = newPattern({ name: 'Example: Heart bracelet', layout: 'loom', size: 'd11', shape: 'cyl', cols: 21, rows: 19, bg: 0, example: true });
+  const inside = (c, r) => {
+    const x = (c - (p.cols - 1) / 2) / 8.2, y = ((p.rows - 1) / 2 - r) / 7.6 + 0.12;
+    const a = x * x + y * y - 1; return a * a * a - x * x * y * y * y <= 0;
+  };
+  for (let r = 0; r < p.rows; r++) for (let c = 0; c < p.cols; c++) {
+    if (!inside(c, r)) continue;
+    const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dc, dr]) => !inside(c + dc, r + dr));
+    p.cells[r * p.cols + c] = edge ? 12 : 2;
+  }
+  // a little shine
+  [[5, 6], [5, 7], [6, 5], [6, 6], [7, 5]].forEach(([r, c]) => { if (p.cells[r * p.cols + c] === 2) p.cells[r * p.cols + c] = 13; });
+  return p;
+}
+
+/* ---------- geometry ---------- */
+function geom(p, base, labels = true) {
+  const sz = SIZES[p.size];
+  let w, h;
+  if (p.layout === 'brick') { w = sz.dia; h = sz.len; } else { w = sz.len; h = sz.dia; }
+  const m = Math.max(w, h);
+  const cw = base * w / m, ch = base * h / m;
+  const GL = labels ? 40 : 4, GT = labels ? 26 : 4, GB = labels ? 10 : 4;
+  const W = GL * 2 + p.cols * cw + (p.layout === 'brick' ? cw / 2 : 0);
+  const H = GT + GB + p.rows * ch + (p.layout === 'peyote' ? ch / 2 : 0);
+  const shiftedRow = r => p.layout === 'brick' && (p.rows - r) % 2 === 0;
+  const xy = (r, c) => {
+    let x = GL + c * cw, y = GT + r * ch;
+    if (p.layout === 'peyote' && c % 2 === 1) y += ch / 2;
+    if (shiftedRow(r)) x += cw / 2;
+    return [x, y];
+  };
+  const hit = (px, py) => {
+    const x = px - GL, y = py - GT; let r, c;
+    if (p.layout === 'brick') { r = Math.floor(y / ch); if (r < 0 || r >= p.rows) return null; c = Math.floor((x - (shiftedRow(r) ? cw / 2 : 0)) / cw); }
+    else if (p.layout === 'peyote') { c = Math.floor(x / cw); if (c < 0 || c >= p.cols) return null; r = Math.floor((y - (c % 2 ? ch / 2 : 0)) / ch); }
+    else { c = Math.floor(x / cw); r = Math.floor(y / ch); }
+    if (r < 0 || r >= p.rows || c < 0 || c >= p.cols) return null;
+    return [r, c];
+  };
+  return { cw, ch, GL, GT, W, H, xy, hit, shiftedRow };
+}
+// tracker row number (1-based, counted from the bottom) for a cell
+function trackRowOf(p, r, c) {
+  if (p.layout === 'peyote') return 2 * (p.rows - 1 - r) + (c % 2 === 1 ? 1 : 2);
+  return p.rows - r;
+}
+function trackerRows(p) {
+  const out = [], N = p.layout === 'peyote' ? 2 * p.rows : p.rows;
+  for (let n = 1; n <= N; n++) {
+    let cells = [];
+    if (p.layout === 'peyote') {
+      const r = p.rows - 1 - Math.floor((n - 1) / 2);
+      for (let c = n % 2 === 1 ? 1 : 0; c < p.cols; c += 2) cells.push([r, c]);
+    } else { const r = p.rows - n; for (let c = 0; c < p.cols; c++) cells.push([r, c]); }
+    const reverse = p.layout !== 'loom' && n % 2 === 0;
+    if (reverse) cells.reverse();
+    const runs = [];
+    for (const [r, c] of cells) {
+      const v = p.cells[r * p.cols + c];
+      const last = runs[runs.length - 1];
+      if (last && last.v === v) last.n++; else runs.push({ v, n: 1 });
+    }
+    // trim empty runs at either end (no bead there at all)
+    while (runs.length && runs[0].v < 0) runs.shift();
+    while (runs.length && runs[runs.length - 1].v < 0) runs.pop();
+    out.push({ n, runs, reverse, beads: runs.reduce((s, x) => s + (x.v >= 0 ? x.n : 0), 0) });
+  }
+  return out;
+}
+
+/* ---------- colour helpers ---------- */
+const hexToRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbToHex = a => '#' + a.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const shade = (hex, f) => rgbToHex(hexToRgb(hex).map(v => f < 0 ? v * (1 + f) : v + (255 - v) * f));
+const lum = hex => { const [r, g, b] = hexToRgb(hex); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
+function nameColor([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+  if (l > 0.92) return 'White'; if (l < 0.1) return 'Black';
+  if (s < 0.14) return l > 0.65 ? 'Light Grey' : l < 0.3 ? 'Charcoal' : 'Grey';
+  let n = h < 14 ? 'Red' : h < 40 ? (l < 0.42 ? 'Brown' : 'Orange') : h < 64 ? (l < 0.4 ? 'Olive' : 'Yellow') : h < 160 ? 'Green' : h < 195 ? 'Teal' : h < 252 ? 'Blue' : h < 290 ? 'Purple' : h < 340 ? 'Pink' : 'Red';
+  if (n === 'Orange' && s < 0.45 && l > 0.6) n = 'Beige';
+  return (l > 0.72 ? 'Light ' : l < 0.28 ? 'Dark ' : '') + n;
+}
+
+let THEME = {};
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+  THEME = { grid: g('--grid'), board: g('--surface'), tag: g('--tag'), tagInk: g('--tag-ink'), ink: g('--ink'), muted: g('--muted'), accent: g('--accent'), line: g('--line') };
+}
+const LIGHT_THEME = { grid: '#9b939f', board: '#ffffff', tag: '#6f5f73', tagInk: '#ffffff', ink: '#241c27', muted: '#6e6474', accent: '#6a3a76', line: '#e3dde6' };
+
+/* ---------- drawing ---------- */
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function beadPath(ctx, shape, x, y, w, h) {
+  if (shape === 'round' || shape === 'pearl') { ctx.beginPath(); ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2); }
+  else rr(ctx, x, y, w, h, Math.min(w, h) * (shape === 'square' ? 0.12 : 0.28));
+}
+function drawBead(ctx, shape, x, y, w, h, hex, T) {
+  const pad = Math.max(0.7, Math.min(w, h) * 0.07);
+  x += pad; y += pad; w -= pad * 2; h -= pad * 2;
+  if (!hex) {
+    beadPath(ctx, shape, x, y, w, h);
+    ctx.strokeStyle = T.grid; ctx.lineWidth = Math.max(1, Math.min(w, h) * 0.09); ctx.stroke();
+    return;
+  }
+  beadPath(ctx, shape, x, y, w, h);
+  if (shape === 'pearl') {
+    const g = ctx.createRadialGradient(x + w * 0.35, y + h * 0.3, Math.min(w, h) * 0.05, x + w / 2, y + h / 2, Math.max(w, h) * 0.6);
+    g.addColorStop(0, shade(hex, 0.6)); g.addColorStop(0.55, hex); g.addColorStop(1, shade(hex, -0.25));
+    ctx.fillStyle = g;
+  } else ctx.fillStyle = hex;
+  ctx.fill();
+  ctx.strokeStyle = shade(hex, -0.38); ctx.lineWidth = Math.max(0.75, Math.min(w, h) * 0.06); ctx.stroke();
+  if (Math.min(w, h) >= 7 && shape !== 'pearl') {
+    ctx.fillStyle = lum(hex) > 0.85 ? 'rgba(255,255,255,.75)' : 'rgba(255,255,255,.32)';
+    ctx.beginPath();
+    if (shape === 'round') ctx.ellipse(x + w * 0.33, y + h * 0.3, w * 0.13, h * 0.11, -0.5, 0, Math.PI * 2);
+    else rr(ctx, x + w * 0.18, y + h * 0.14, w * 0.18, h * 0.62, w * 0.09);
+    ctx.fill();
+  }
+}
+function tag(ctx, T, x, y, w, h, text, fs, on) {
+  rr(ctx, x, y, w, h, 4); ctx.fillStyle = on ? T.accent : T.tag; ctx.fill();
+  ctx.fillStyle = on ? T.board : T.tagInk; ctx.font = `600 ${fs}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + w / 2, y + h / 2 + 0.5);
+}
+function drawPattern(ctx, p, g, T, opt = {}) {
+  ctx.fillStyle = T.board; ctx.fillRect(0, 0, g.W, g.H);
+  const { cw, ch } = g;
+  const track = opt.track ? p.progress + 1 : 0;
+  for (let r = 0; r < p.rows; r++) for (let c = 0; c < p.cols; c++) {
+    const v = p.cells[r * p.cols + c];
+    const [x, y] = g.xy(r, c);
+    drawBead(ctx, p.shape, x, y, cw, ch, v >= 0 ? p.palette[v].hex : null, T);
+    if (track) {
+      const n = trackRowOf(p, r, c);
+      if (n < track) { ctx.fillStyle = T.board; ctx.globalAlpha = 0.6; ctx.fillRect(x, y, cw, ch); ctx.globalAlpha = 1; }
+      else if (n === track) { ctx.strokeStyle = T.accent; ctx.lineWidth = 2.5; rr(ctx, x + 0.5, y + 0.5, cw - 1, ch - 1, Math.min(cw, ch) * 0.25); ctx.stroke(); }
+    }
+  }
+  if (!opt.labels) return;
+  // column numbers
+  const everyC = cw >= 17 ? 1 : cw >= 9 ? 5 : 10;
+  ctx.font = `600 ${Math.min(11, Math.max(9, cw * 0.5))}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let c = 0; c < p.cols; c++) {
+    const n = c + 1; if (n !== 1 && n % everyC) continue;
+    ctx.fillStyle = n % 5 === 0 ? T.ink : T.muted;
+    ctx.fillText(n, g.GL + c * cw + cw / 2 + (p.layout === 'brick' ? cw / 4 : 0), g.GT / 2 + 1);
+  }
+  // row numbers, both sides
+  const fs = Math.min(11, Math.max(8.5, ch * 0.42));
+  const th = Math.min(ch - 2, 18), tw = 28;
+  const every = th >= 11 ? 1 : 5;
+  const done = n => opt.track && n <= p.progress;
+  const rightX = g.W - g.GL + 6;
+  for (let r = 0; r < p.rows; r++) {
+    if (p.layout === 'peyote') {
+      const a = 2 * (p.rows - 1 - r) + 2, b = a - 1;   // left: unshifted columns, right: shifted
+      const ty = g.GT + r * ch + (ch - th) / 2;
+      if (a % (every === 1 ? 1 : 10) === 0 || every === 1) tag(ctx, T, g.GL - tw - 6, ty, tw, th, a, fs, done(a));
+      if (every === 1 || b === 1 || (b + 1) % 10 === 0) tag(ctx, T, rightX, ty + ch / 2, tw, th, b, fs, done(b));
+    } else {
+      const n = p.rows - r; if (every > 1 && n !== 1 && n % every) continue;
+      const ty = g.GT + r * ch + (ch - th) / 2;
+      tag(ctx, T, g.GL - tw - 6, ty, tw, th, n, fs, done(n));
+      tag(ctx, T, rightX, ty, tw, th, n, fs, done(n));
+    }
+  }
+}
+
+/* ---------- board ---------- */
+const board = $('#board'), bctx = board.getContext('2d'), scroller = $('#scroller');
+let G = null, raf = 0, sideTimer = 0;
+function render() {
+  if (raf) return;
+  raf = requestAnimationFrame(() => {
+    raf = 0;
+    G = geom(P, zoom, true);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const W = Math.ceil(G.W), H = Math.ceil(G.H);
+    if (board.width !== Math.round(W * dpr) || board.height !== Math.round(H * dpr)) {
+      board.width = Math.round(W * dpr); board.height = Math.round(H * dpr);
+      board.style.width = W + 'px'; board.style.height = H + 'px';
+    }
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawPattern(bctx, P, G, THEME, { labels: true, track: activeTab === 'rows' });
+  });
+}
+function changed(sideNow) {
+  render();
+  dirty = true; scheduleSave();
+  clearTimeout(sideTimer);
+  if (sideNow) renderSide(); else sideTimer = setTimeout(renderSide, 250);
+}
+function fitZoom() {
+  const g1 = geom(P, 100, true);
+  const availW = scroller.clientWidth - 30, availH = scroller.clientHeight - 30;
+  const kx = (availW - g1.GL * 2) / (g1.W - g1.GL * 2), ky = (availH - g1.GT - 10) / (g1.H - g1.GT - 10);
+  zoom = clamp(Math.floor(100 * Math.min(kx, ky)), 8, 64);
+  render();
+}
+function setZoom(z, focus) {
+  const old = zoom; zoom = clamp(z, 8, 80);
+  if (zoom === old) return;
+  const rect = scroller.getBoundingClientRect();
+  const fx = focus ? focus[0] - rect.left : rect.width / 2, fy = focus ? focus[1] - rect.top : rect.height / 2;
+  const cx = scroller.scrollLeft + fx, cy = scroller.scrollTop + fy, k = zoom / old;
+  G = geom(P, zoom, true);
+  render();
+  requestAnimationFrame(() => requestAnimationFrame(() => { scroller.scrollLeft = cx * k - fx; scroller.scrollTop = cy * k - fy; }));
+}
+
+/* ---------- editing ---------- */
+function snapshot() { return { cells: P.cells.slice(), palette: P.palette.map(c => ({ ...c })), cols: P.cols, rows: P.rows, layout: P.layout, size: P.size, shape: P.shape }; }
+function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 120) undoStack.shift(); redoStack = []; updUndo(); }
+function restore(s) { Object.assign(P, { cells: s.cells.slice(), palette: s.palette.map(c => ({ ...c })), cols: s.cols, rows: s.rows, layout: s.layout, size: s.size, shape: s.shape }); cur = Math.min(cur, P.palette.length - 1); }
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); updUndo(); changed(true); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); updUndo(); changed(true); }
+function updUndo() { $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length; }
+
+function mirrors(r, c) {
+  const out = [[r, c]];
+  if (mirror === 'h' || mirror === 'both') out.push([r, P.cols - 1 - c]);
+  if (mirror === 'v' || mirror === 'both') out.push([P.rows - 1 - r, c]);
+  if (mirror === 'both') out.push([P.rows - 1 - r, P.cols - 1 - c]);
+  return out;
+}
+function paint(r, c, v) {
+  let any = false;
+  for (const [a, b] of mirrors(r, c)) { const i = a * P.cols + b; if (P.cells[i] !== v) { P.cells[i] = v; any = true; } }
+  return any;
+}
+function neighbors(r, c) {
+  const out = [];
+  if (P.layout === 'loom') out.push([r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]);
+  else if (P.layout === 'peyote') { out.push([r - 1, c], [r + 1, c]); const d = c % 2 ? [0, 1] : [-1, 0]; for (const dc of [-1, 1]) for (const dr of d) out.push([r + dr, c + dc]); }
+  else { out.push([r, c - 1], [r, c + 1]); const d = G.shiftedRow(r) ? [0, 1] : [-1, 0]; for (const dr of [-1, 1]) for (const dc of d) out.push([r + dr, c + dc]); }
+  return out.filter(([a, b]) => a >= 0 && a < P.rows && b >= 0 && b < P.cols);
+}
+function flood(r, c, v) {
+  const target = P.cells[r * P.cols + c]; if (target === v) return false;
+  const seen = new Uint8Array(P.cells.length), stack = [[r, c]];
+  while (stack.length) {
+    const [a, b] = stack.pop(), i = a * P.cols + b;
+    if (seen[i] || P.cells[i] !== target) continue;
+    seen[i] = 1; paint(a, b, v);
+    for (const n of neighbors(a, b)) stack.push(n);
+  }
+  return true;
+}
+
+/* pointer handling: one finger draws, two fingers pinch-zoom and pan */
+const pointers = new Map();
+let stroke = null, pinch = null, panDrag = null, lastCell = null;
+function evPos(e) { const rc = board.getBoundingClientRect(); return [e.clientX - rc.left, e.clientY - rc.top]; }
+function cellsBetween(a, b) {
+  const out = []; const n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+  for (let i = 1; i <= n; i++) out.push([Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n)]);
+  return out;
+}
+function applyAt(cell) {
+  const [r, c] = cell;
+  if (tool === 'pick') { const v = P.cells[r * P.cols + c]; if (v >= 0) { selectColor(v); setTool('draw'); toast(`Picked ${P.palette[v].name}`); } return false; }
+  if (tool === 'fill') return flood(r, c, cur);
+  return paint(r, c, tool === 'erase' ? -1 : cur);
+}
+board.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  try { board.setPointerCapture(e.pointerId); } catch {}
+  if (pointers.size === 2) {
+    if (stroke) { if (stroke.changed) { restore(undoStack.pop()); updUndo(); render(); } stroke = null; }
+    const [p1, p2] = [...pointers.values()];
+    pinch = { d: Math.hypot(p1[0] - p2[0], p1[1] - p2[1]), z: zoom, mid: [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], sl: scroller.scrollLeft, st: scroller.scrollTop };
+    return;
+  }
+  if (pointers.size > 2) return;
+  if (tool === 'pan' || e.button === 1) { panDrag = { x: e.clientX, y: e.clientY, sl: scroller.scrollLeft, st: scroller.scrollTop }; return; }
+  const cell = G && G.hit(...evPos(e)); if (!cell) return;
+  e.preventDefault();
+  pushUndo();
+  stroke = { changed: applyAt(cell) };
+  if (stroke.changed && P.example) P.example = false;
+  lastCell = cell;
+  if (stroke.changed) changed();
+  if (tool === 'fill' || tool === 'pick') { if (!stroke.changed) { undoStack.pop(); updUndo(); } stroke = null; }
+});
+board.addEventListener('pointermove', e => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  const pos = evPos(e), cell = G && G.hit(...pos);
+  showHover(cell);
+  if (pinch && pointers.size === 2) {
+    const [p1, p2] = [...pointers.values()];
+    const d = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]), mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+    setZoom(Math.round(pinch.z * d / pinch.d), mid);
+    scroller.scrollLeft -= mid[0] - pinch.mid[0]; scroller.scrollTop -= mid[1] - pinch.mid[1];
+    pinch.mid = mid;
+    return;
+  }
+  if (panDrag) { scroller.scrollLeft = panDrag.sl - (e.clientX - panDrag.x); scroller.scrollTop = panDrag.st - (e.clientY - panDrag.y); return; }
+  if (!stroke || !cell) return;
+  const path = lastCell ? cellsBetween(lastCell, cell) : [cell];
+  let any = false; for (const cc of path) any = applyAt(cc) || any;
+  lastCell = cell;
+  if (any) { stroke.changed = true; changed(); }
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (pointers.size === 0) {
+    panDrag = null;
+    if (stroke) { if (!stroke.changed) { undoStack.pop(); updUndo(); } stroke = null; renderSide(); }
+    lastCell = null;
+  }
+}
+board.addEventListener('pointerup', endPointer);
+board.addEventListener('pointercancel', endPointer);
+board.addEventListener('pointerleave', () => showHover(null));
+scroller.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(Math.round(zoom * (e.deltaY < 0 ? 1.1 : 0.9)), [e.clientX, e.clientY]); } }, { passive: false });
+
+function showHover(cell) {
+  const el = $('#hoverInfo');
+  if (!cell) { el.textContent = 'Tap a bead to colour it'; return; }
+  const [r, c] = cell, v = P.cells[r * P.cols + c];
+  const rowLbl = P.layout === 'peyote' ? `Row ${trackRowOf(P, r, c)}` : `Row ${P.rows - r}`;
+  el.innerHTML = `<b>${rowLbl}</b> · bead ${c + 1} · ${v >= 0 ? esc(P.palette[v].name) : 'empty'}`;
+}
+
+/* ---------- tools UI ---------- */
+function setTool(t) { tool = t; $$('.tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); board.style.cursor = t === 'pan' ? 'grab' : t === 'pick' ? 'copy' : 'crosshair'; }
+$$('.tool[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+const MIRRORS = ['none', 'h', 'v', 'both'], MIRROR_LBL = { none: 'Mirror', h: '↔ L/R', v: '↕ T/B', both: '✛ 4-way' };
+$('#btnMirror').addEventListener('click', () => {
+  mirror = MIRRORS[(MIRRORS.indexOf(mirror) + 1) % 4];
+  $('#btnMirror').setAttribute('aria-pressed', mirror !== 'none'); $('#mirrorLbl').textContent = MIRROR_LBL[mirror];
+  toast(mirror === 'none' ? 'Mirror off' : mirror === 'h' ? 'Mirror left and right' : mirror === 'v' ? 'Mirror top and bottom' : 'Mirror all four corners');
+});
+$('#btnUndo').addEventListener('click', undo);
+$('#btnRedo').addEventListener('click', redo);
+$('#zoomIn').addEventListener('click', () => setZoom(Math.round(zoom * 1.2) + 1));
+$('#zoomOut').addEventListener('click', () => setZoom(Math.round(zoom / 1.2)));
+$('#zoomFit').addEventListener('click', fitZoom);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea, select') || document.querySelector('dialog[open]')) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
+  const map = { b: 'draw', e: 'erase', f: 'fill', i: 'pick', ' ': 'pan' };
+  if (map[k]) { e.preventDefault(); setTool(map[k]); }
+});
+
+/* ---------- side panels ---------- */
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  activeTab = t.dataset.tab;
+  $$('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  $$('.panel').forEach(p => p.hidden = p.dataset.panel !== activeTab);
+  renderSide(); render();
+}));
+function counts() { const n = new Array(P.palette.length).fill(0); for (const v of P.cells) if (v >= 0) n[v]++; return n; }
+function selectColor(i) { cur = i; replaceMode = false; pendingDelete = null; renderColors(); if (tool === 'erase' || tool === 'pick') setTool('draw'); }
+function renderSide() { $('#curChip').style.background = P.palette[cur]?.hex || 'transparent'; renderColors(); if (activeTab === 'count') renderCount(); if (activeTab === 'rows') renderRows(); $('#dimInfo').textContent = `${P.cols} × ${P.layout === 'peyote' ? P.rows * 2 + ' peyote rows' : P.rows + ' rows'} · ${LAYOUT_NAMES[P.layout]} · ${SIZES[P.size].label}`; }
+function renderColors() {
+  const n = counts();
+  const wrap = $('#swatches'); wrap.innerHTML = '';
+  P.palette.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw'; b.setAttribute('aria-pressed', i === cur); b.title = c.name; b.setAttribute('aria-label', `${c.name}, ${n[i]} beads`);
+    b.innerHTML = `<span class="bead"></span>${n[i] ? `<span class="n">${n[i]}</span>` : ''}`;
+    b.querySelector('.bead').style.background = c.hex;
+    b.addEventListener('click', () => {
+      if (replaceMode && i !== cur) {
+        pushUndo(); for (let k = 0; k < P.cells.length; k++) if (P.cells[k] === cur) P.cells[k] = i;
+        toast(`Swapped ${P.palette[cur].name} for ${c.name}`); replaceMode = false; cur = i; changed(true); return;
+      }
+      selectColor(i);
+    });
+    wrap.appendChild(b);
+  });
+  if (P.palette.length < MAX_COLORS) {
+    const a = document.createElement('button'); a.className = 'sw add'; a.textContent = '+'; a.setAttribute('aria-label', 'Add a colour');
+    a.addEventListener('click', () => {
+      pushUndo();
+      const hex = rgbToHex([60 + Math.random() * 160, 60 + Math.random() * 160, 60 + Math.random() * 160]);
+      P.palette.push({ name: nameColor(hexToRgb(hex)), hex }); cur = P.palette.length - 1; changed(true);
+      setTimeout(() => $('#edHex').click(), 50);
+    });
+    wrap.appendChild(a);
+  }
+  const c = P.palette[cur];
+  $('#editor').hidden = !c;
+  if (!c) return;
+  if (document.activeElement !== $('#edName')) $('#edName').value = c.name;
+  $('#edHex').value = c.hex;
+  $('#edReplace').textContent = replaceMode ? 'Cancel swap' : 'Swap all beads to…';
+  $('#edDelete').textContent = pendingDelete === cur ? 'Tap again to delete' : 'Delete colour';
+  $('#edHint').textContent = replaceMode ? `Now tap the colour that should replace ${c.name}.` : `${n[cur]} bead${n[cur] === 1 ? '' : 's'} of this colour.`;
+}
+$('#edName').addEventListener('input', e => { P.palette[cur].name = e.target.value.slice(0, 60) || 'Colour'; dirty = true; scheduleSave(); clearTimeout(sideTimer); sideTimer = setTimeout(() => { if (activeTab !== 'colors') renderSide(); }, 300); });
+let hexUndoPushed = false;
+$('#edHex').addEventListener('input', e => { if (!hexUndoPushed) { pushUndo(); hexUndoPushed = true; } P.palette[cur].hex = e.target.value; $('#curChip').style.background = e.target.value; render(); dirty = true; scheduleSave(); const b = $$('.sw')[cur]?.querySelector('.bead'); if (b) b.style.background = e.target.value; });
+$('#edHex').addEventListener('change', () => { hexUndoPushed = false; renderSide(); });
+$('#edReplace').addEventListener('click', () => { replaceMode = !replaceMode; renderColors(); });
+$('#edDelete').addEventListener('click', () => {
+  if (P.palette.length <= 1) { toast('A pattern needs at least one colour'); return; }
+  if (pendingDelete !== cur) { pendingDelete = cur; renderColors(); return; }
+  pushUndo();
+  const del = cur;
+  for (let k = 0; k < P.cells.length; k++) { const v = P.cells[k]; if (v === del) P.cells[k] = -1; else if (v > del) P.cells[k] = v - 1; }
+  const name = P.palette[del].name;
+  P.palette.splice(del, 1); cur = Math.max(0, del - 1); pendingDelete = null;
+  toast(`Deleted ${name}. Its beads are now empty.`); changed(true);
+});
+
+function finishedSize(p) {
+  const sz = SIZES[p.size];
+  let w, h; // mm
+  if (p.layout === 'brick') { w = p.cols * sz.dia + sz.dia / 2; h = p.rows * sz.len; }
+  else { w = p.cols * sz.len; h = p.rows * sz.dia + (p.layout === 'peyote' ? sz.dia / 2 : 0); }
+  return [w, h];
+}
+const fmtLen = mm => `${(mm / 10).toFixed(1)} cm`;
+const fmtIn = mm => `${(mm / 25.4).toFixed(1)}″`;
+function shopping() {
+  const n = counts(), sz = SIZES[P.size];
+  return P.palette.map((c, i) => {
+    const extra = Math.ceil(n[i] * 1.1);
+    const buy = sz.perStrand ? `${Math.max(1, Math.ceil(extra / sz.perStrand))} strand${Math.ceil(extra / sz.perStrand) > 1 ? 's' : ''}` : `${Math.max(1, Math.ceil(extra / sz.perGram))} g`;
+    return { i, name: c.name, hex: c.hex, count: n[i], extra, buy };
+  }).filter(x => x.count > 0).sort((a, b) => b.count - a.count);
+}
+function renderCount() {
+  const list = shopping(), sz = SIZES[P.size];
+  const total = list.reduce((s, x) => s + x.count, 0);
+  const [w, h] = finishedSize(P);
+  $('#stTotal').textContent = total.toLocaleString();
+  $('#stColors').textContent = list.length;
+  $('#stSize').textContent = `${fmtLen(w)} × ${fmtLen(h)}`;
+  const buyTotal = sz.perStrand ? Math.ceil(total * 1.1 / sz.perStrand) : Math.ceil(total * 1.1 / sz.perGram);
+  $('#stBuy').textContent = sz.perStrand ? `${buyTotal} strand${buyTotal === 1 ? '' : 's'}` : `≈ ${Math.max(1, buyTotal)} g`;
+  $('#stBuyK').textContent = sz.perStrand ? 'of 40 cm pearl strands' : 'of beads, all colours';
+  $('#thBuy').textContent = sz.perStrand ? 'Strands' : 'Buy';
+  const body = $('#countBody'); body.innerHTML = '';
+  if (!list.length) body.innerHTML = '<tr><td colspan="4" class="muted">No beads yet. Pick a colour and tap the chart.</td></tr>';
+  for (const x of list) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="dot"></span>${esc(x.name)}</td><td class="num">${x.count}</td><td class="num">${x.extra}</td><td class="num">${x.buy}</td>`;
+    tr.querySelector('.dot').style.background = x.hex; body.appendChild(tr);
+  }
+  let note = `Finished piece is about <b>${fmtLen(w)} × ${fmtLen(h)}</b> (${fmtIn(w)} × ${fmtIn(h)}) with ${esc(sz.label)}. `;
+  note += sz.perStrand ? 'Pearls are usually sold on 40 cm (16″) strands. ' : `Weights assume about ${sz.perGram} beads per gram, which varies by brand and finish. `;
+  if (P.layout === 'loom') {
+    const warpLen = h + 600;
+    note += `<br><br><b>Loom thread:</b> you need ${P.cols + 1} warp threads (one more than the beads across), each about ${fmtLen(warpLen)} long, which is the length of the piece plus 30 cm at each end. That's about ${((P.cols + 1) * warpLen / 1000).toFixed(1)} m of warp thread.`;
+  } else {
+    note += `<br><br><b>Thread:</b> work in arm's-length pieces (1–1.5 m) and add new thread as you go. Plan on roughly ${Math.max(1, Math.round(total * (sz.dia) * 3 / 1000))} m in total.`;
+  }
+  $('#countNote').innerHTML = note;
+}
+function shoppingText() {
+  const list = shopping(), [w, h] = finishedSize(P), sz = SIZES[P.size];
+  const lines = [`${P.name} — shopping list`, `${LAYOUT_NAMES[P.layout]}, ${P.cols} × ${P.rows}, ${sz.label}`, `Finished size about ${fmtLen(w)} × ${fmtLen(h)}`, ''];
+  for (const x of list) lines.push(`${x.name}: ${x.count} beads (buy ${x.extra} incl. 10% extra, ${x.buy})`);
+  lines.push('', `Total: ${list.reduce((s, x) => s + x.count, 0)} beads`);
+  return lines.join('\n');
+}
+$('#copyList').addEventListener('click', () => copyText(shoppingText(), 'Shopping list copied'));
+
+function runChips(runs) {
+  if (!runs.length) return '<span class="muted small">No beads in this row</span>';
+  return runs.map(x => x.v < 0 ? `<span class="run skip">skip ${x.n}</span>` : `<span class="run"><span class="dot" style="background:${P.palette[x.v].hex}"></span>${x.n} ${esc(P.palette[x.v].name)}</span>`).join('');
+}
+function renderRows() {
+  const rows = trackerRows(P), N = rows.length;
+  P.progress = clamp(P.progress, 0, N);
+  const curRow = rows[P.progress];
+  if (curRow) {
+    $('#trkEyebrow').textContent = `Now beading · ${P.progress} of ${N} rows done`;
+    $('#trkTitle').textContent = `Row ${curRow.n} · ${curRow.beads} beads ${P.layout === 'loom' ? '' : curRow.reverse ? '· read ←' : '· read →'}`;
+    $('#trkRuns').innerHTML = runChips(curRow.runs);
+    $('#trkHint').textContent = P.layout === 'peyote' && curRow.n <= 2 ? 'Peyote start: string rows 1 and 2 together, alternating one bead from each, then work row 3 back across.' : P.layout === 'loom' ? 'Pick up the beads left to right, then pass back through them under the warp threads.' : '';
+    $('#trkNext').disabled = false; $('#trkNext').textContent = curRow.n === N ? 'Last row done' : 'Row done, next';
+  } else {
+    $('#trkEyebrow').textContent = 'All done'; $('#trkTitle').textContent = `All ${N} rows finished 🎉`;
+    $('#trkRuns').innerHTML = ''; $('#trkHint').textContent = 'Weave in your thread tails and you are finished.'; $('#trkNext').disabled = true;
+  }
+  $('#trkPrev').disabled = P.progress === 0;
+  const list = $('#rowList'); list.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const b = document.createElement('button');
+    b.className = 'rowitem' + (idx === P.progress ? ' current' : idx < P.progress ? ' done' : '');
+    b.innerHTML = `<span class="rn">${idx < P.progress ? '✓ ' : ''}Row ${row.n}<small>${P.layout === 'loom' ? '' : row.reverse ? '← ' : '→ '}${row.beads} beads</small></span><span class="runs">${runChips(row.runs)}</span>`;
+    b.addEventListener('click', () => { P.progress = idx; changed(true); });
+    list.appendChild(b);
+  });
+  const curEl = list.querySelector('.current'); if (curEl && !renderRows.scrolled) { curEl.scrollIntoView({ block: 'nearest' }); }
+}
+$('#trkNext').addEventListener('click', () => { P.progress++; changed(true); });
+$('#trkPrev').addEventListener('click', () => { P.progress = Math.max(0, P.progress - 1); changed(true); });
+$('#trkReset').addEventListener('click', () => { P.progress = 0; changed(true); toast('Progress reset to row 1'); });
+function rowsText() {
+  const rows = trackerRows(P);
+  const lines = [`${P.name} — row by row`, `${LAYOUT_NAMES[P.layout]}, ${P.cols} beads across. Row 1 is at the bottom.`, ''];
+  for (const r of rows) lines.push(`Row ${r.n}${P.layout === 'loom' ? '' : r.reverse ? ' (←)' : ' (→)'}: ` + (r.runs.length ? r.runs.map(x => x.v < 0 ? `skip ${x.n}` : `${x.n} ${P.palette[x.v].name}`).join(', ') : 'no beads'));
+  return lines.join('\n');
+}
+$('#copyRows').addEventListener('click', () => copyText(rowsText(), 'Row guide copied'));
+
+/* ---------- name ---------- */
+$('#patName').addEventListener('input', e => { P.name = e.target.value.slice(0, 80) || 'Untitled'; P.example = false; dirty = true; scheduleSave(); });
+
+/* ---------- storage ---------- */
+function localAll() { try { return JSON.parse(lsGet(LS_KEY) || '{}') || {}; } catch { return {}; } }
+function setState(t) { $('#saveState').textContent = t; }
+function scheduleSave() {
+  if (P.example) { setState('Example pattern. Start drawing to make it yours.'); }
+  clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 1200);
+}
+async function saveNow() {
+  if (!dirty) return;
+  if (P.example) { // an untouched example isn't saved until edited
+    const ex = examplePattern(); if (ex.cells.every((v, i) => v === P.cells[i]) && P.palette.length === ex.palette.length) { dirty = false; return; }
+    P.example = false;
+  }
+  if (saving) { saveAgain = true; return; }
+  saving = true; dirty = false;
+  P.updated = Date.now();
+  const data = serialize(P);
+  const all = localAll(); all[P.id] = data; lsSet(LS_KEY, JSON.stringify(all)); lsSet(LS_LAST, P.id);
+  store.list.set(P.id, data);
+  if (store.db) {
+    setState('Saving…');
+    try { await store.db.collection(`data/users/${store.uid}`).doc(P.id).set(data); setState('Saved to your account'); }
+    catch (err) { setState('Saved on this device only (account save failed)'); }
+  } else setState('Saved on this device');
+  saving = false;
+  if (saveAgain) { saveAgain = false; dirty = true; saveNow(); }
+}
+async function deletePattern(id) {
+  const all = localAll(); delete all[id]; lsSet(LS_KEY, JSON.stringify(all));
+  store.list.delete(id);
+  if (store.db) { try { await store.db.collection(`data/users/${store.uid}`).doc(id).delete(); } catch {} }
+}
+function openPattern(p, fit = true) {
+  P = p; cur = Math.min(2, P.palette.length - 1); undoStack = []; redoStack = []; updUndo(); replaceMode = false; pendingDelete = null;
+  $('#patName').value = P.name; lsSet(LS_LAST, P.id);
+  setState(P.example ? 'Example pattern. Start drawing to make it yours.' : store.db ? 'Saved to your account' : 'Saved on this device');
+  renderSide();
+  if (fit) requestAnimationFrame(fitZoom); else render();
+}
+async function connectStore() {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  try {
+    const [db, user, dl] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
+    downloads = dl;
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    store.db = db; store.uid = id; store.mode = 'account';
+    const snap = await db.collection(`data/users/${id}`).get();
+    for (const d of snap.docs) { const data = d.data(); if (data && typeof data.cells === 'string') store.list.set(d.id, data); }
+    // upload patterns that only exist on this device
+    const all = localAll();
+    for (const [pid, data] of Object.entries(all)) {
+      const remote = store.list.get(pid);
+      if (!remote || (+data.updated || 0) > (+remote.updated || 0)) {
+        try { await db.collection(`data/users/${id}`).doc(pid).set(data); store.list.set(pid, data); } catch {}
+      }
+    }
+    if (P.example && !dirty) {
+      const last = lsGet(LS_LAST);
+      const pick = (last && store.list.get(last)) ? last : [...store.list.entries()].sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))[0]?.[0];
+      if (pick) { const p = deserialize(pick, store.list.get(pick)); if (p) openPattern(p); }
+    } else if (!P.example) {
+      const remote = store.list.get(P.id);
+      if (remote && (+remote.updated || 0) > P.updated && !dirty) { const p = deserialize(P.id, remote); if (p) openPattern(p, false); }
+      else { dirty = true; saveNow(); }
+    }
+    setState(P.example ? 'Example pattern. Start drawing to make it yours.' : 'Saved to your account');
+  } catch { /* stays on device storage */ }
+}
+
+/* ---------- dialogs ---------- */
+$$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+$$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+let setupMode = 'new', setupLayout = 'loom';
+Object.entries(SIZES).forEach(([k, s]) => $('#sSize').insertAdjacentHTML('beforeend', `<option value="${k}">${esc(s.label)}</option>`));
+function drawChoice(cv, layout) {
+  const ctx = cv.getContext('2d'), p = newPattern({ layout, cols: 9, rows: 4, size: 'd11', shape: 'cyl', bg: -1 });
+  const pal = ['#c2202e', '#f4b23c', '#2bb3b1', '#6a3a76'];
+  p.palette = pal.map(hex => ({ name: '', hex }));
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) p.cells[r * 9 + c] = (r + c) % 3 === 0 ? (c % 4) : -1;
+  const g = geom(p, 22, false);
+  const T = { ...THEME };
+  cv.width = Math.ceil(g.W); cv.height = Math.ceil(g.H);
+  drawPattern(ctx, p, g, T, {});
+}
+function updSizeNote() {
+  const cols = clamp(+$('#sCols').value || 2, 2, 150), rows = clamp(+$('#sRows').value || 2, 2, 200);
+  const fake = { layout: setupLayout, size: $('#sSize').value, cols, rows };
+  const [w, h] = finishedSize(fake);
+  $('#sizeNote').innerHTML = `With these settings the finished piece is about <b>${fmtLen(w)} wide × ${fmtLen(h)} tall</b> (${fmtIn(w)} × ${fmtIn(h)}). A bracelet is usually 15–19 cm long; earrings are often 2–4 cm wide.`;
+}
+function openSetup(mode) {
+  setupMode = mode;
+  const src = mode === 'edit' ? P : { name: 'My pattern', layout: P.layout, size: P.size, shape: P.shape, cols: 30, rows: 30 };
+  $('#setupTitle').textContent = mode === 'edit' ? 'Grid & beads' : 'New pattern';
+  $('#setupOk').textContent = mode === 'edit' ? 'Apply changes' : 'Create pattern';
+  $('#setupNameField').hidden = mode === 'edit';
+  $('#sName').value = mode === 'edit' ? P.name : 'My pattern';
+  setupLayout = src.layout;
+  $$('#layoutChoices .choice').forEach(b => { b.setAttribute('aria-pressed', b.dataset.layout === setupLayout); drawChoice(b.querySelector('canvas'), b.dataset.layout); });
+  $('#sSize').value = src.size; $('#sShape').value = src.shape; $('#sCols').value = src.cols; $('#sRows').value = src.rows;
+  const bg = $('#sBg'); bg.innerHTML = `<option value="-1">${mode === 'edit' ? 'New beads: empty' : 'Empty grid (no beads yet)'}</option>` + P.palette.map((c, i) => `<option value="${i}">${mode === 'edit' ? 'New beads: ' : 'Filled with '}${esc(c.name)}</option>`).join('');
+  $('#sBgField').firstChild.textContent = mode === 'edit' ? 'If the grid grows' : 'Start with';
+  updSizeNote();
+  $('#dlgSetup').showModal();
+}
+$$('#layoutChoices .choice').forEach(b => b.addEventListener('click', () => { setupLayout = b.dataset.layout; $$('#layoutChoices .choice').forEach(x => x.setAttribute('aria-pressed', x === b)); updSizeNote(); }));
+$('#sSize').addEventListener('change', () => { $('#sShape').value = SIZES[$('#sSize').value].shape; updSizeNote(); });
+['#sCols', '#sRows'].forEach(s => $(s).addEventListener('input', updSizeNote));
+$('#setupForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const cols = clamp(Math.round(+$('#sCols').value) || 2, 2, 150), rows = clamp(Math.round(+$('#sRows').value) || 2, 2, 200);
+  const bg = +$('#sBg').value;
+  if (setupMode === 'new') {
+    saveNow();
+    const p = newPattern({ name: $('#sName').value.trim() || 'My pattern', layout: setupLayout, size: $('#sSize').value, shape: $('#sShape').value, cols, rows, bg, palette: P.palette });
+    openPattern(p); dirty = true; scheduleSave();
+  } else {
+    pushUndo();
+    const old = P.cells, oc = P.cols, or = P.rows;
+    const cells = new Int16Array(cols * rows).fill(bg);
+    // keep the bottom-left corner fixed, since row 1 is at the bottom
+    for (let r = 0; r < rows; r++) { const orow = r - (rows - or); if (orow < 0 || orow >= or) continue; for (let c = 0; c < Math.min(cols, oc); c++) cells[r * cols + c] = old[orow * oc + c]; }
+    Object.assign(P, { cols, rows, cells, layout: setupLayout, size: $('#sSize').value, shape: $('#sShape').value, example: false });
+    changed(true); requestAnimationFrame(fitZoom);
+  }
+  $('#dlgSetup').close();
+});
+$('#btnNew').addEventListener('click', () => openSetup('new'));
+$('#btnSetup').addEventListener('click', () => openSetup('edit'));
+
+/* thumbnails + list */
+function thumb(p) {
+  const g = geom(p, Math.max(2, Math.min(120 / p.cols, 120 / p.rows)), false);
+  const cv = document.createElement('canvas'); cv.width = Math.ceil(g.W); cv.height = Math.ceil(g.H);
+  const ctx = cv.getContext('2d'); ctx.fillStyle = THEME.board; ctx.fillRect(0, 0, cv.width, cv.height);
+  for (let r = 0; r < p.rows; r++) for (let c = 0; c < p.cols; c++) {
+    const v = p.cells[r * p.cols + c]; const [x, y] = g.xy(r, c);
+    ctx.fillStyle = v >= 0 ? p.palette[v].hex : THEME.line; ctx.fillRect(x, y, Math.max(1, g.cw - 0.4), Math.max(1, g.ch - 0.4));
+  }
+  return cv.toDataURL();
+}
+let listPendingDelete = null;
+function renderList() {
+  if (!P.example) store.list.set(P.id, serialize(P));
+  const entries = [...store.list.entries()].sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0));
+  if (store.mode === 'device') for (const [k, v] of Object.entries(localAll())) if (!store.list.has(k)) entries.push([k, v]);
+  const wrap = $('#patList'); wrap.innerHTML = '';
+  if (!entries.length) wrap.innerHTML = '<p class="muted" style="margin:0">No saved patterns yet. Your pattern saves itself as soon as you draw on it.</p>';
+  for (const [id, data] of entries) {
+    const p = deserialize(id, data); if (!p) continue;
+    const el = document.createElement('div'); el.className = 'pat' + (id === P.id ? ' open' : '');
+    const d = new Date(p.updated);
+    el.innerHTML = `<img alt=""><div style="min-width:0"><div class="t"></div><div class="small muted">${p.cols} × ${p.rows} · ${LAYOUT_NAMES[p.layout]} · ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div></div><div class="acts"><button class="btn" data-a="open">${id === P.id ? 'Open now' : 'Open'}</button><button class="btn ghost" data-a="dup">Copy</button><button class="btn ghost danger" data-a="del">${listPendingDelete === id ? 'Really delete?' : 'Delete'}</button></div>`;
+    el.querySelector('img').src = thumb(p); el.querySelector('.t').textContent = p.name;
+    el.querySelector('[data-a=open]').addEventListener('click', async () => { await saveNow(); openPattern(p); $('#dlgList').close(); });
+    el.querySelector('[data-a=dup]').addEventListener('click', async () => { await saveNow(); const q = deserialize(uid(), data); q.name = p.name + ' (copy)'; q.created = Date.now(); q.progress = 0; q.example = false; openPattern(q); dirty = true; await saveNow(); renderList(); toast('Copy made and opened'); });
+    el.querySelector('[data-a=del]').addEventListener('click', async () => {
+      if (listPendingDelete !== id) { listPendingDelete = id; renderList(); return; }
+      listPendingDelete = null; await deletePattern(id);
+      if (id === P.id) { const next = [...store.list.entries()].sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))[0]; openPattern(next ? deserialize(next[0], next[1]) : examplePattern()); }
+      renderList(); toast('Pattern deleted');
+    });
+    wrap.appendChild(el);
+  }
+  $('#listNote').textContent = store.mode === 'account' ? 'Patterns are saved to your Claude account, so they show up on your iPad, phone and computer.' : 'Patterns are saved in this browser.';
+}
+$('#btnList').addEventListener('click', async () => { listPendingDelete = null; await saveNow(); renderList(); $('#dlgList').showModal(); });
+
+/* export */
+let exportBlob = null;
+function buildExport() {
+  const T = LIGHT_THEME, base = 30, g = geom(P, base, true), scale = 2;
+  const list = shopping(), [w, h] = finishedSize(P), sz = SIZES[P.size];
+  const pad = 28, headH = 74, cols = Math.max(1, Math.floor((Math.max(g.W, 520)) / 250));
+  const legendRows = Math.ceil(list.length / cols);
+  const W = Math.max(g.W, 520) + pad * 2, H = headH + g.H + 30 + legendRows * 30 + pad + 20;
+  const cv = document.createElement('canvas'); cv.width = W * scale; cv.height = H * scale;
+  const ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = T.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 24px "Bricolage Grotesque", system-ui, sans-serif'; ctx.fillText(P.name, pad, pad + 20);
+  ctx.font = '500 13px Inter, system-ui, sans-serif'; ctx.fillStyle = T.muted;
+  ctx.fillText(`${LAYOUT_NAMES[P.layout]} · ${P.cols} × ${P.rows} · ${sz.label} · about ${fmtLen(w)} × ${fmtLen(h)} · ${list.reduce((s, x) => s + x.count, 0)} beads`, pad, pad + 42);
+  ctx.save(); ctx.translate((W - g.W) / 2, headH); drawPattern(ctx, { ...P }, g, T, { labels: true }); ctx.restore();
+  let y0 = headH + g.H + 24; const colW = (W - pad * 2) / cols;
+  list.forEach((x, k) => {
+    const cx = pad + (k % cols) * colW, cy = y0 + Math.floor(k / cols) * 30;
+    drawBead(ctx, P.shape === 'square' ? 'square' : 'round', cx, cy, 22, 22, x.hex, T);
+    ctx.fillStyle = T.ink; ctx.font = '600 13px Inter, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+    const label = `${x.name}`; ctx.fillText(label.length > 22 ? label.slice(0, 21) + '…' : label, cx + 30, cy + 11);
+    ctx.fillStyle = T.muted; ctx.font = '500 12px Inter, system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(`${x.count}`, cx + colW - 14, cy + 11); ctx.textAlign = 'left';
+  });
+  return cv;
+}
+$('#btnExport').addEventListener('click', () => {
+  const cv = buildExport();
+  $('#exportImg').src = cv.toDataURL('image/png');
+  exportBlob = null; cv.toBlob(b => { exportBlob = b; }, 'image/png');
+  $('#exSave').hidden = !downloads;
+  $('#exportHint').textContent = downloads ? 'Save the image to keep or print it. You can also press and hold the picture to save it to Photos.' : 'Press and hold the picture (or right-click it) to save it to Photos or your computer.';
+  $('#dlgExport').showModal();
+});
+$('#exSave').addEventListener('click', async () => {
+  if (!downloads || !exportBlob) return;
+  const fname = (P.name.replace(/[^\w\- ]+/g, '').trim() || 'bead-pattern') + '.png';
+  try { await downloads.save({ filename: fname, data: exportBlob }); toast('Image saved'); }
+  catch (err) { if (err?.code !== 'dismissed' && err?.code !== 'declined') toast('The image was not saved. Press and hold it instead.'); }
+});
+$('#exCopy').addEventListener('click', () => copyText(rowsText() + '\n\n' + shoppingText(), 'Row guide and shopping list copied'));
+
+/* photo import */
+let phImg = null, phResult = null;
+$('#btnPhoto').addEventListener('click', () => { $('#phDims').textContent = `${P.cols} × ${P.rows} beads`; $('#phApply').disabled = !phResult; if (phImg) runPhoto(); $('#dlgPhoto').showModal(); });
+$('#phFile').addEventListener('change', e => {
+  const f = e.target.files?.[0]; if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { phImg = img; runPhoto(); };
+  img.onerror = () => toast('That file could not be opened as a picture');
+  img.src = url;
+});
+$('#phK').addEventListener('input', e => { $('#phKLbl').textContent = e.target.value; if (phImg) runPhoto(); });
+$('#phUsePal').addEventListener('change', () => { $('#phK').disabled = $('#phUsePal').checked; if (phImg) runPhoto(); });
+function kmeans(px, k) {
+  const pts = px.length > 6000 ? px.filter((_, i) => i % Math.ceil(px.length / 6000) === 0) : px;
+  const d2 = (a, b) => (a[0] - b[0]) ** 2 * 0.3 + (a[1] - b[1]) ** 2 * 0.59 + (a[2] - b[2]) ** 2 * 0.11;
+  const mean = [0, 1, 2].map(j => pts.reduce((s, p) => s + p[j], 0) / pts.length);
+  let cents = [pts.reduce((best, p) => d2(p, mean) < d2(best, mean) ? p : best, pts[0]).slice()];
+  while (cents.length < k) {
+    let best = null, bd = -1;
+    for (const p of pts) { let d = Infinity; for (const c of cents) d = Math.min(d, d2(p, c)); if (d > bd) { bd = d; best = p; } }
+    if (!best || bd === 0) break; cents.push(best.slice());
+  }
+  for (let it = 0; it < 14; it++) {
+    const sum = cents.map(() => [0, 0, 0, 0]);
+    for (const p of pts) { let bi = 0, bd = Infinity; cents.forEach((c, i) => { const d = d2(p, c); if (d < bd) { bd = d; bi = i; } }); const s = sum[bi]; s[0] += p[0]; s[1] += p[1]; s[2] += p[2]; s[3]++; }
+    cents = cents.map((c, i) => sum[i][3] ? [sum[i][0] / sum[i][3], sum[i][1] / sum[i][3], sum[i][2] / sum[i][3]] : c);
+  }
+  return { cents, d2 };
+}
+function runPhoto() {
+  const cols = P.cols, rows = P.rows;
+  const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
+  const ctx = cv.getContext('2d');
+  // cover-crop the image to the grid's real shape
+  const g = geom(P, 10, false), gridAspect = (g.W - 8) / (g.H - 8), ia = phImg.width / phImg.height;
+  let sw = phImg.width, sh = phImg.height, sx = 0, sy = 0;
+  if (ia > gridAspect) { sw = sh * gridAspect; sx = (phImg.width - sw) / 2; } else { sh = sw / gridAspect; sy = (phImg.height - sh) / 2; }
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(phImg, sx, sy, sw, sh, 0, 0, cols, rows);
+  const data = ctx.getImageData(0, 0, cols, rows).data;
+  const px = [], alpha = [];
+  for (let i = 0; i < cols * rows; i++) { px.push([data[i * 4], data[i * 4 + 1], data[i * 4 + 2]]); alpha.push(data[i * 4 + 3]); }
+  const opaque = px.filter((_, i) => alpha[i] >= 128);
+  let palette, cents, d2;
+  if ($('#phUsePal').checked) { palette = P.palette.map(c => ({ ...c })); cents = palette.map(c => hexToRgb(c.hex)); d2 = (a, b) => (a[0] - b[0]) ** 2 * 0.3 + (a[1] - b[1]) ** 2 * 0.59 + (a[2] - b[2]) ** 2 * 0.11; }
+  else {
+    const km = kmeans(opaque.length ? opaque : px, +$('#phK').value); cents = km.cents; d2 = km.d2;
+    const used = {}; palette = cents.map(c => { let n = nameColor(c); used[n] = (used[n] || 0) + 1; if (used[n] > 1) n += ' ' + used[n]; return { name: n, hex: rgbToHex(c) }; });
+  }
+  const cells = new Int16Array(cols * rows);
+  px.forEach((p, i) => { if (alpha[i] < 128) { cells[i] = -1; return; } let bi = 0, bd = Infinity; cents.forEach((c, j) => { const d = d2(p, c); if (d < bd) { bd = d; bi = j; } }); cells[i] = bi; });
+  phResult = { palette, cells };
+  const prev = { ...P, palette, cells, progress: 0 }, pg = geom(prev, 14, false), out = $('#photoPreview');
+  out.width = Math.ceil(pg.W); out.height = Math.ceil(pg.H);
+  drawPattern(out.getContext('2d'), prev, pg, THEME, {});
+  $('#phApply').disabled = false;
+}
+$('#phApply').addEventListener('click', () => {
+  if (!phResult) return;
+  pushUndo(); P.palette = phResult.palette; P.cells = phResult.cells.slice(); P.example = false; P.progress = 0; cur = 0;
+  changed(true); $('#dlgPhoto').close(); toast('Pattern made from your photo. Undo brings back the old one.');
+});
+
+/* ---------- misc ---------- */
+let toastT = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+async function copyText(text, ok) {
+  try { await navigator.clipboard.writeText(text); toast(ok); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    let done = false; try { done = document.execCommand('copy'); } catch {}
+    ta.remove(); toast(done ? ok : 'Copy did not work here. Use Export instead.');
+  }
+}
+const mq = matchMedia('(prefers-color-scheme: dark)');
+const reTheme = () => { readTheme(); render(); };
+mq.addEventListener?.('change', reTheme);
+new MutationObserver(reTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.addEventListener('resize', () => render());
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+
+/* ---------- boot ---------- */
+readTheme();
+let start = null;
+const last = lsGet(LS_LAST), all = localAll();
+if (last && all[last]) start = deserialize(last, all[last]);
+openPattern(start || examplePattern());
+if (document.fonts?.ready) document.fonts.ready.then(() => render());
+connectStore();
+})();
+</script>
