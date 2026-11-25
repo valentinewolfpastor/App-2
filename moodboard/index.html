@@ -1,0 +1,1010 @@
+<title>Mood Almanac</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a quiet gallery wall. Boards hang as collage cards; a board opens to a tinted header
+   drawn from its own photos, a masonry wall, and a dark stage for slow viewing. */
+:root {
+  --bg: #eef0ed;
+  --surface: #fbfcfa;
+  --ink: #1b1f1c;
+  --muted: #5f6762;
+  --line: #d4d9d4;
+  --accent: #2f4a3c;
+  --accent-ink: #f6f8f5;
+  --danger: #a3402c;
+  --stage: #0c0e0d;
+  --stage-ink: #eceeea;
+  --stage-muted: #9aa19c;
+  --shadow: 0 1px 2px rgb(20 30 24 / .06), 0 8px 24px -12px rgb(20 30 24 / .18);
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111412; --surface: #191d1a; --ink: #e6eae6; --muted: #9aa39d; --line: #2a302c;
+    --accent: #a9c8b5; --accent-ink: #111412; --danger: #e48a73;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 10px 28px -14px rgb(0 0 0 / .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111412; --surface: #191d1a; --ink: #e6eae6; --muted: #9aa39d; --line: #2a302c;
+  --accent: #a9c8b5; --accent-ink: #111412; --danger: #e48a73;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 10px 28px -14px rgb(0 0 0 / .6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap {
+  max-width: 1240px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Top bar ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in oklab, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 16px; padding-block: 12px; }
+.mark { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; }
+.mark b { font-family: var(--font-display); font-weight: 700; font-size: 21px; letter-spacing: -.02em; }
+.mark span { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: border-color .15s, background .15s; }
+.btn:hover { border-color: color-mix(in oklab, var(--ink) 35%, var(--line)); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { background: color-mix(in oklab, var(--accent) 88%, var(--ink)); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--danger); }
+.btn.solid-danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.iconbtn { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; border: 0; background: transparent; color: inherit; }
+.iconbtn:hover { background: color-mix(in oklab, var(--ink) 8%, transparent); }
+.iconbtn svg { width: 17px; height: 17px; }
+
+.banner { font-size: 13px; color: var(--muted); padding-block: 8px; }
+.banner:empty { display: none; }
+
+/* ---------- Home ---------- */
+.intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; padding-block: 40px 20px; }
+.intro h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 48px); line-height: 1.02; letter-spacing: -.03em; margin: 0 0 10px; text-wrap: balance; }
+.intro p { margin: 0; color: var(--muted); max-width: 52ch; }
+.intro .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 4px 20px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip .n { font-family: var(--font-mono); font-size: 11px; opacity: .7; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--kc, var(--muted)); }
+
+.boards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 28px 20px; padding-bottom: 64px; }
+.card { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; min-width: 0; }
+.collage { aspect-ratio: 4 / 3; max-width: 100%; border-radius: var(--radius); overflow: hidden; display: grid; gap: 3px; background: var(--line); box-shadow: var(--shadow); transition: transform .25s ease; }
+.card:hover .collage { transform: translateY(-2px); }
+.collage img { width: 100%; height: 100%; object-fit: cover; display: block; background: color-mix(in oklab, var(--line) 60%, var(--bg)); }
+.collage.n2 { grid-template-columns: 1fr 1fr; }
+.collage.n3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+.collage.n3 img:first-child { grid-row: span 2; }
+.collage.n4 { grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.collage.n4 img:first-child { grid-row: span 2; }
+.collage.n4 img:nth-child(4) { grid-column: 2 / span 2; }
+.collage.empty { background: linear-gradient(135deg, color-mix(in oklab, var(--kc) 45%, var(--bg)), color-mix(in oklab, var(--kc) 12%, var(--bg))); place-items: center; color: color-mix(in oklab, var(--kc) 60%, var(--ink)); font-size: 13px; }
+.stripe { display: flex; height: 6px; border-radius: 3px; overflow: hidden; }
+.stripe i { flex: 1; }
+.card h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -.01em; margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+.meta .k { display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; font-size: 11px; }
+.meta .n { font-family: var(--font-mono); }
+
+.emptyhome { display: grid; gap: 24px; padding-block: 24px 80px; }
+.seasonpick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.seasonpick button { text-align: left; border: 1px solid var(--line); border-radius: var(--radius); padding: 0; background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
+.seasonpick button:hover { border-color: var(--kc); }
+.seasonpick .sw { height: 70px; background: linear-gradient(120deg, color-mix(in oklab, var(--kc) 70%, var(--bg)), color-mix(in oklab, var(--kc) 25%, var(--bg))); }
+.seasonpick b { font-family: var(--font-display); font-size: 17px; font-weight: 600; padding: 10px 12px 0; }
+.seasonpick small { color: var(--muted); padding: 0 12px 12px; font-size: 12px; }
+
+/* ---------- Board ---------- */
+.bhead { background: linear-gradient(115deg, color-mix(in oklab, var(--c1) 30%, var(--bg)) 0%, color-mix(in oklab, var(--c2) 22%, var(--bg)) 55%, color-mix(in oklab, var(--c3) 26%, var(--bg)) 100%); border-bottom: 1px solid var(--line); }
+.bhead .wrap { padding-block: 22px 26px; display: grid; gap: 16px; }
+.back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; width: fit-content; }
+.back:hover { color: var(--ink); }
+.back svg { width: 14px; height: 14px; }
+.titlein { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5.5vw, 56px); letter-spacing: -.03em; line-height: 1.05; border: 0; background: transparent; padding: 0; width: 100%; min-width: 0; border-bottom: 1px dashed transparent; }
+.titlein:hover, .titlein:focus { border-bottom-color: color-mix(in oklab, var(--ink) 30%, transparent); outline: none; }
+.titlein::placeholder { color: color-mix(in oklab, var(--ink) 35%, transparent); }
+.fields { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sel, .yearin, .datein { border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent); background: color-mix(in oklab, var(--surface) 70%, transparent); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.yearin { width: 84px; font-family: var(--font-mono); }
+.notein { width: 100%; max-width: 70ch; min-height: 46px; border: 0; background: transparent; resize: vertical; padding: 0; font-size: 16px; line-height: 1.55; color: var(--ink); }
+.notein::placeholder { color: color-mix(in oklab, var(--ink) 45%, transparent); }
+.notein:focus { outline: none; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar .spacer { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+.palette { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { display: flex; align-items: center; gap: 8px; border: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); background: color-mix(in oklab, var(--surface) 75%, transparent); border-radius: 999px; padding: 3px 10px 3px 3px; font-family: var(--font-mono); font-size: 12px; }
+.swatch i { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
+
+.bbody .wrap { padding-block: 24px 72px; display: grid; gap: 22px; }
+.reflect { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 10px; max-width: 780px; }
+.reflect .lab { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; display: flex; gap: 10px; align-items: center; }
+.reflect p { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 1.45; letter-spacing: -.005em; text-wrap: pretty; }
+.words { display: flex; flex-wrap: wrap; gap: 6px; }
+.words span { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted); }
+.reflect .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+
+.drop { border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 44px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
+.drop b { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink); }
+body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--accent); outline-offset: 6px; }
+
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); grid-auto-rows: 4px; column-gap: 14px; grid-auto-flow: dense; }
+.wall.grid { grid-auto-rows: auto; row-gap: 14px; }
+.tile { position: relative; margin: 0 0 14px; min-width: 0; align-self: start; }
+.wall:not(.grid) .tile img { height: auto; }
+.wall.grid .tile { margin: 0; }
+.tile.feat { grid-column: span 2; }
+.tile .ph { position: relative; border-radius: var(--radius); overflow: hidden; background: color-mix(in oklab, var(--line) 60%, var(--bg)); cursor: zoom-in; display: block; width: 100%; padding: 0; border: 0; }
+.tile img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+.tile .ph:hover img { transform: scale(1.02); }
+.wall.grid .tile .ph { aspect-ratio: 1; }
+.tile figcaption { font-size: 13px; color: var(--muted); padding: 7px 2px 0; overflow-wrap: anywhere; }
+.tile .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; background: color-mix(in oklab, var(--surface) 90%, transparent); border-radius: 999px; padding: 2px; box-shadow: var(--shadow); opacity: 0; transition: opacity .15s; }
+.tile:hover .acts, .tile:focus-within .acts { opacity: 1; }
+@media (hover: none) { .tile .acts { opacity: 1; } }
+.tile .acts .iconbtn { width: 30px; height: 30px; }
+.tile .acts .iconbtn.on { color: var(--accent); }
+.tile .capin { width: 100%; margin-top: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 6px 8px; font-size: 13px; }
+.tile .confirm { position: absolute; inset: 0; display: grid; place-content: center; gap: 10px; text-align: center; background: color-mix(in oklab, var(--surface) 92%, transparent); border-radius: var(--radius); font-size: 13px; padding: 12px; }
+.tile .confirm div { display: flex; gap: 6px; justify-content: center; }
+.tile.pending .ph { display: grid; place-items: center; aspect-ratio: 4/3; color: var(--muted); font-size: 12px; }
+.tile.pending .ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in oklab, var(--surface) 50%, transparent) 50%, transparent 70%); animation: shimmer 1.4s infinite; }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.danger-zone { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+
+/* ---------- Modal ---------- */
+.scrim { position: fixed; inset: 0; z-index: 30; background: rgb(10 14 12 / .45); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { background: var(--surface); color: var(--ink); border-radius: 10px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 24px; display: grid; gap: 18px; box-shadow: 0 30px 80px -20px rgb(0 0 0 / .5); }
+.modal h2 { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: -.02em; margin: 0; }
+.modal label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.modal input[type="text"], .modal input[type="number"], .modal input[type="date"] { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 10px 12px; font-size: 16px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink); width: 100%; }
+.kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.kinds .chip { color: var(--ink); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.kinds .chip[aria-pressed="true"] { background: color-mix(in oklab, var(--kc) 22%, var(--surface)); border-color: var(--kc); color: var(--ink); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---------- Stage (contemplate) ---------- */
+.stage { position: fixed; inset: 0; z-index: 40; background: var(--stage); color: var(--stage-ink); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+.stage .glow { position: absolute; inset: -20%; filter: blur(80px); opacity: .35; transition: background 2.5s ease; pointer-events: none; }
+.stage header, .stage footer { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: 14px; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+.stage footer { padding-top: 14px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; }
+.stage .sname { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage .iconbtn { color: var(--stage-ink); width: 40px; height: 40px; }
+.stage .iconbtn:hover { background: rgb(255 255 255 / .1); }
+.stage .frame { position: relative; z-index: 1; margin: 0 max(18px, env(safe-area-inset-left, 0px)); min-height: 0; }
+.stage .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1.6s ease; }
+.stage .frame img.on { opacity: 1; animation: drift 11s ease-out forwards; }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.045); } }
+.stage .opening { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 18px; padding: 20px; opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
+.stage .opening.on { opacity: 1; }
+.stage .opening .k { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--stage-muted); }
+.stage .opening h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(38px, 8vw, 88px); letter-spacing: -.035em; line-height: 1; margin: 0; text-wrap: balance; }
+.stage .opening p { max-width: 54ch; margin: 0 auto; color: color-mix(in oklab, var(--stage-ink) 82%, var(--stage)); font-size: 17px; line-height: 1.6; }
+.stage .opening .bands { display: flex; justify-content: center; gap: 0; height: 10px; width: min(320px, 70vw); margin: 0 auto; border-radius: 5px; overflow: hidden; }
+.stage .opening .bands i { flex: 1; }
+.stage .cap { flex: 1 1 260px; min-width: 0; font-size: 15px; color: color-mix(in oklab, var(--stage-ink) 88%, var(--stage)); }
+.stage .count { font-family: var(--font-mono); font-size: 12px; color: var(--stage-muted); }
+.stage .dots { display: flex; gap: 5px; }
+.stage .dots i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .15); }
+.stage .ctl { display: flex; gap: 4px; }
+.stage .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / .5); width: 0; z-index: 3; }
+.stage .bar.run { animation: fill linear forwards; }
+@keyframes fill { to { width: 100%; } }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: var(--shadow); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.loading { padding-block: 80px; color: var(--muted); text-align: center; }
+
+@media (max-width: 560px) {
+  .mark span { display: none; }
+  .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; }
+  .tile { margin-bottom: 10px; }
+  .tile.feat { grid-column: span 2; }
+  .row2 { grid-template-columns: 1fr; }
+  .stage .frame { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .2s !important; }
+  .stage .frame img.on { animation: none; }
+}
+</style>
+
+<div class="top"><div class="wrap">
+  <a class="mark" href="#"><b>Mood Almanac</b><span>Seasons · Events · Places</span></a>
+  <button class="btn primary" id="newTop" type="button">New board</button>
+</div></div>
+<div class="wrap"><div class="banner" id="banner"></div></div>
+<main id="app"><div class="wrap loading">Opening your boards…</div></main>
+<input type="file" id="picker" accept="image/*" multiple hidden>
+
+<script>
+/* ---------- Constants ---------- */
+const KINDS = {
+  spring: { label: 'Spring', color: '#8fb36a', season: true, hint: 'Blossom, rain, first light' },
+  summer: { label: 'Summer', color: '#dca23a', season: true, hint: 'Heat, salt, long evenings' },
+  autumn: { label: 'Autumn', color: '#b5562c', season: true, hint: 'Leaves, wool, low sun' },
+  winter: { label: 'Winter', color: '#7896b0', season: true, hint: 'Frost, candles, quiet' },
+  event:  { label: 'Event',  color: '#94629f', hint: 'A wedding, a party, a launch' },
+  place:  { label: 'Place',  color: '#478475', hint: 'A trip, a city, a room' },
+  other:  { label: 'Other',  color: '#8a8a7e', hint: 'Anything else' },
+};
+const KIND_ORDER = ['spring', 'summer', 'autumn', 'winter', 'event', 'place', 'other'];
+const HEX = /^#[0-9a-f]{6}$/i;
+const ASSET = /^[0-9a-f]{32}$/i;
+const MAX_SIDE = 2000;
+
+const ICON = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/>',
+  back: '<path d="M15 18l-6-6 6-6"/>',
+  next: '<path d="M9 18l6-6-6-6"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  caption: '<path d="M4 7h16M4 12h10M4 17h7"/>',
+  star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  wide: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M8 12h8M8 12l2-2M8 12l2 2M16 12l-2-2M16 12l-2 2"/>',
+  left: '<path d="M14 7l-5 5 5 5"/>',
+  right: '<path d="M10 7l5 5-5 5"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+};
+function icon(name) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
+  s.setAttribute('stroke-width', '1.8'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = ICON[name]; // static markup from this file only
+  return s;
+}
+
+/* ---------- Tiny DOM helper (all data goes in as text) ---------- */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'style' && typeof v === 'object') for (const [p, val] of Object.entries(v)) el.style.setProperty(p, val);
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k in el && typeof v !== 'string') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+const $ = (s, r = document) => r.querySelector(s);
+
+let toastTimer;
+function toast(msg) {
+  document.querySelector('.toast')?.remove();
+  const t = h('div', { class: 'toast', role: 'status' }, msg);
+  document.body.append(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.remove(), 3600);
+}
+function setBanner(msg) { $('#banner').textContent = msg || ''; }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const safeHex = (c) => (typeof c === 'string' && HEX.test(c) ? c : '#888888');
+const str = (v, max = 4000) => (typeof v === 'string' ? v.slice(0, max) : '');
+
+/* ---------- State ---------- */
+let boards = {};            // id -> board
+let store = null;           // backend
+let assets = null;          // assets namespace or null
+let sample = null;          // sample fn or null
+let loaded = false;
+let filter = 'all';
+let editingCaption = null;  // photo id
+let confirmDelete = null;   // photo id
+let confirmBoard = false;
+let reflecting = false;
+const pendingUploads = {};  // boardId -> count
+
+function normalize(b) {
+  b = (b && typeof b === 'object') ? b : {};
+  return {
+    name: str(b.name, 200),
+    kind: KINDS[b.kind] ? b.kind : 'other',
+    year: Number.isInteger(b.year) ? b.year : null,
+    date: typeof b.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : '',
+    note: str(b.note, 4000),
+    layout: b.layout === 'grid' ? 'grid' : 'collage',
+    cover: typeof b.cover === 'string' ? b.cover : null,
+    photos: Array.isArray(b.photos) ? b.photos.filter((p) => p && typeof p.id === 'string').map((p) => ({
+      id: p.id, w: +p.w || 4, h: +p.h || 3, caption: str(p.caption, 500),
+      colors: Array.isArray(p.colors) ? p.colors.filter((c) => HEX.test(c)).slice(0, 6) : [],
+      feat: !!p.feat,
+    })) : [],
+    palette: Array.isArray(b.palette) ? b.palette.filter((c) => HEX.test(c)).slice(0, 8) : [],
+    reflection: b.reflection && typeof b.reflection === 'object' ? {
+      text: str(b.reflection.text, 2000),
+      words: Array.isArray(b.reflection.words) ? b.reflection.words.map((w) => str(w, 40)).filter(Boolean).slice(0, 6) : [],
+      title: str(b.reflection.title, 120), at: +b.reflection.at || 0,
+    } : null,
+    created: +b.created || Date.now(),
+    updated: +b.updated || Date.now(),
+  };
+}
+
+/* ---------- Colors ---------- */
+const hexOf = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const dist = (a, b) => Math.hypot(a[0] - b[0], (a[1] - b[1]) * 1.2, a[2] - b[2]);
+function lum([r, g, b]) { return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+function sat([r, g, b]) { const mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx === 0 ? 0 : (mx - mn) / mx; }
+
+function extractColors(ctx, w, hgt) {
+  const data = ctx.getImageData(0, 0, w, hgt).data;
+  const buckets = new Map();
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 200) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const key = (r >> 4) << 8 | (g >> 4) << 4 | (b >> 4);
+    let e = buckets.get(key);
+    if (!e) buckets.set(key, e = [0, 0, 0, 0]);
+    e[0] += r; e[1] += g; e[2] += b; e[3]++;
+  }
+  const list = [...buckets.values()].map((e) => {
+    const c = [e[0] / e[3], e[1] / e[3], e[2] / e[3]];
+    return { c, score: e[3] * (0.6 + sat(c)) };
+  }).sort((a, b) => b.score - a.score);
+  const picked = [];
+  for (const e of list) {
+    if (picked.every((p) => dist(p, e.c) > 46)) picked.push(e.c);
+    if (picked.length === 5) break;
+  }
+  return picked.map((c) => hexOf(...c));
+}
+
+function boardPalette(photos) {
+  const pool = [];
+  for (const p of photos) p.colors.forEach((hex, i) => {
+    const c = rgbOf(hex), w = 5 - i + (p.feat ? 2 : 0);
+    const near = pool.find((q) => dist(q.c, c) < 40);
+    if (near) {
+      const t = near.w + w;
+      near.c = near.c.map((v, k) => (v * near.w + c[k] * w) / t); near.w = t;
+    } else pool.push({ c, w });
+  });
+  return pool.sort((a, b) => b.w - a.w).slice(0, 6).sort((a, b) => lum(b.c) - lum(a.c)).map((e) => hexOf(...e.c));
+}
+function tints(b) {
+  const p = b.palette.length ? b.palette : [KINDS[b.kind].color];
+  const pick = (i) => safeHex(p[Math.min(p.length - 1, Math.floor(i * (p.length - 1)))]);
+  // Prefer the more saturated tones for the header wash.
+  const vivid = [...p].sort((a, c) => sat(rgbOf(c)) - sat(rgbOf(a)));
+  return { '--c1': safeHex(vivid[0] || pick(0)), '--c2': safeHex(vivid[1] || pick(.5)), '--c3': safeHex(vivid[2] || pick(1)), '--kc': KINDS[b.kind].color };
+}
+
+/* ---------- Images ---------- */
+async function decode(file) {
+  try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (_) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image(); img.src = url; await img.decode(); return img;
+    } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  }
+}
+function canvasBlob(canvas, type, q) { return new Promise((res) => canvas.toBlob(res, type, q)); }
+async function prepare(file) {
+  const src = await decode(file);
+  const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight;
+  if (!w0 || !h0) throw new Error('empty');
+  const s = Math.min(1, MAX_SIDE / Math.max(w0, h0));
+  const w = Math.round(w0 * s), hh = Math.round(h0 * s);
+  const c = document.createElement('canvas'); c.width = w; c.height = hh;
+  const ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0, w, hh);
+  const blob = await canvasBlob(c, 'image/jpeg', 0.86);
+  const sw = 72, sh = Math.max(1, Math.round(72 * hh / w));
+  const sc = document.createElement('canvas'); sc.width = sw; sc.height = sh;
+  const sctx = sc.getContext('2d', { willReadFrequently: true }); sctx.drawImage(c, 0, 0, sw, sh);
+  if (src.close) src.close();
+  return { blob, w, h: hh, colors: extractColors(sctx, sw, sh) };
+}
+
+/* ---------- Backends ---------- */
+function makeWriter(writeFn, onError) {
+  const pending = new Map(), running = new Set();
+  async function flush(id) {
+    if (running.has(id)) return;
+    running.add(id);
+    try {
+      while (pending.has(id)) {
+        const body = pending.get(id); pending.delete(id);
+        try { await writeFn(id, body); }
+        catch (e) {
+          if (e && (e.code === 'unavailable' || e.code === 'store_unavailable')) {
+            await new Promise((r) => setTimeout(r, 700 + Math.random() * 800));
+            try { await writeFn(id, body); } catch (e2) { onError(e2); }
+          } else onError(e);
+        }
+      }
+    } finally { running.delete(id); }
+  }
+  return { queue(id, body) { pending.set(id, body); flush(id); }, busy: (id) => running.has(id) || pending.has(id) };
+}
+
+async function cloudBackend(db, userId) {
+  const col = db.collection('data/users/' + userId);
+  const writer = makeWriter((id, body) => body === null ? col.doc(id).delete() : col.doc(id).set(body), (e) => {
+    toast(e && e.code === 'quota_exceeded' ? 'Storage is full. Delete a board you no longer need, then try again.' : 'That change didn’t save. Check your connection and try again.');
+  });
+  let first = true;
+  await new Promise((resolve) => {
+    const timer = setTimeout(() => { setBanner('Your boards can’t be reached yet. What you see may be out of date.'); resolve(); }, 10000);
+    col.onSnapshot((snap) => {
+      const seen = new Set();
+      for (const doc of snap.docs) {
+        if (!doc.id.startsWith('board-')) continue;
+        const id = doc.id.slice(6); seen.add(id);
+        if (writer.busy(doc.id)) continue;
+        boards[id] = normalize(doc.data());
+      }
+      for (const id of Object.keys(boards)) if (!seen.has(id) && !writer.busy('board-' + id)) delete boards[id];
+      if (!snap.metadata || !snap.metadata.fromCache) { clearTimeout(timer); setBanner(''); }
+      if (first) { first = false; resolve(); } else if (!isEditing()) render();
+    }, (e) => {
+      clearTimeout(timer);
+      setBanner(e && e.code === 'revoked' ? '' : 'Live sync stopped. Reload the page to reconnect.');
+      resolve();
+    });
+  });
+  return {
+    kind: 'cloud',
+    save: (id, b) => writer.queue('board-' + id, b),
+    remove: (id) => writer.queue('board-' + id, null),
+    url: (assetId) => (ASSET.test(assetId) ? '/_blob/' + assetId : ''),
+    async upload(blob) { const r = await assets.upload(blob, { type: 'image/jpeg' }); return r.id; },
+    async drop(assetId) { if (assets && ASSET.test(assetId)) await assets.delete(assetId).catch(() => {}); },
+    async blob(assetId) { const r = await fetch('/_blob/' + assetId); if (!r.ok) throw new Error('fetch'); return r.blob(); },
+  };
+}
+
+function localBackend() {
+  const KEY = 'mood-almanac.boards';
+  try { const raw = JSON.parse(localStorage.getItem(KEY) || '{}'); for (const id in raw) boards[id] = normalize(raw[id]); } catch (_) {}
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(boards)); } catch (_) { toast('This browser won’t store more boards here.'); } };
+  let dbp = null;
+  const idb = () => dbp ||= new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('mood-almanac', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('images');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+  const tx = async (mode, fn) => { const d = await idb(); return new Promise((res, rej) => { const t = d.transaction('images', mode); const q = fn(t.objectStore('images')); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+  const urls = new Map();
+  return {
+    kind: 'local',
+    save: () => persist(),
+    remove: () => persist(),
+    url(id) {
+      if (urls.has(id)) return urls.get(id);
+      const p = tx('readonly', (s) => s.get(id)).then((b) => { const u = b ? URL.createObjectURL(b) : ''; urls.set(id, u); return u; }).catch(() => '');
+      urls.set(id, p); return p;
+    },
+    async upload(blob) { const id = 'l' + uid(); await tx('readwrite', (s) => s.put(blob, id)); return id; },
+    async drop(id) { await tx('readwrite', (s) => s.delete(id)).catch(() => {}); },
+    async blob(id) { const b = await tx('readonly', (s) => s.get(id)); if (!b) throw new Error('missing'); return b; },
+  };
+}
+
+function setImg(img, id) {
+  const u = store.url(id);
+  if (typeof u === 'string') img.src = u;
+  else u.then((x) => { if (x) img.src = x; });
+}
+
+/* ---------- Board operations ---------- */
+const saveTimers = {};
+function save(id, { soon = false } = {}) {
+  const b = boards[id]; if (!b) return;
+  b.updated = Date.now();
+  clearTimeout(saveTimers[id]);
+  const go = () => store.save(id, structuredClone(b));
+  if (soon) saveTimers[id] = setTimeout(go, 700); else go();
+}
+function label(b) {
+  const k = KINDS[b.kind];
+  if (b.kind === 'event' && b.date) {
+    const d = new Date(b.date + 'T12:00:00');
+    return k.label + ' · ' + d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  return b.year ? k.label + ' ' + b.year : k.label;
+}
+function currentSeason(d = new Date()) {
+  const m = d.getMonth();
+  return m < 2 || m === 11 ? 'winter' : m < 5 ? 'spring' : m < 8 ? 'summer' : 'autumn';
+}
+function createBoard({ name, kind, year, date }) {
+  const id = uid();
+  boards[id] = normalize({ name, kind, year, date, created: Date.now(), updated: Date.now() });
+  save(id);
+  location.hash = 'board-' + id;
+  return id;
+}
+function coverList(b, n = 4) {
+  const ph = b.photos.slice();
+  const ci = ph.findIndex((p) => p.id === b.cover);
+  if (ci > 0) ph.unshift(ph.splice(ci, 1)[0]);
+  return ph.slice(0, n);
+}
+
+async function addFiles(id, files) {
+  files = [...files].filter((f) => f && (f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp|gif|avif)$/i.test(f.name || '')));
+  if (!files.length) return;
+  if (store.kind === 'cloud' && !assets) { toast('Only people who can edit this app can add photos.'); return; }
+  pendingUploads[id] = (pendingUploads[id] || 0) + files.length;
+  render();
+  let failed = 0;
+  for (const f of files) {
+    try {
+      const prep = await prepare(f);
+      const assetId = await store.upload(prep.blob);
+      const b = boards[id];
+      if (!b) { store.drop(assetId); continue; }
+      b.photos.push({ id: assetId, w: prep.w, h: prep.h, caption: '', colors: prep.colors, feat: false });
+      b.palette = boardPalette(b.photos);
+      if (!b.cover) b.cover = assetId;
+      save(id);
+    } catch (e) {
+      failed++;
+      if (e && e.code === 'quota_or_state') { toast('Photo storage is full. Remove some photos and try again.'); }
+      else if (e && e.code === 'rate_limited') { toast('Adding photos too quickly. Wait a moment and add the rest.'); }
+    } finally {
+      pendingUploads[id]--;
+      if (!isEditing()) render();
+    }
+  }
+  if (failed && failed === files.length) toast(failed === 1 ? 'That photo couldn’t be read. Try a JPEG or PNG.' : 'Those photos couldn’t be read. Try JPEG or PNG files.');
+  else if (failed) toast(failed + ' of ' + files.length + ' photos couldn’t be read and were skipped.');
+}
+
+function removePhoto(id, pid) {
+  const b = boards[id]; if (!b) return;
+  b.photos = b.photos.filter((p) => p.id !== pid);
+  if (b.cover === pid) b.cover = b.photos[0]?.id || null;
+  b.palette = boardPalette(b.photos);
+  save(id);
+  store.drop(pid);
+  confirmDelete = null;
+  render();
+}
+function deleteBoard(id) {
+  const b = boards[id]; if (!b) return;
+  const ids = b.photos.map((p) => p.id);
+  delete boards[id];
+  store.remove(id);
+  ids.forEach((pid) => store.drop(pid));
+  confirmBoard = false;
+  location.hash = '';
+  toast('Board deleted.');
+}
+
+/* ---------- Claude reflection ---------- */
+async function reflect(id) {
+  const b = boards[id]; if (!b || !sample || reflecting) return;
+  reflecting = true; render();
+  try {
+    const lim = await sample.limits().catch(() => null);
+    const max = lim && lim.images ? Math.min(lim.images.maxCount, 6) : 0;
+    const chosen = [];
+    if (max && b.photos.length) {
+      const step = b.photos.length / Math.min(max, b.photos.length);
+      for (let i = 0; i < Math.min(max, b.photos.length); i++) chosen.push(b.photos[Math.floor(i * step)]);
+    }
+    const images = (await Promise.all(chosen.map((p) => store.blob(p.id).catch(() => null)))).filter(Boolean);
+    const caps = b.photos.map((p) => p.caption).filter(Boolean).slice(0, 20);
+    const prompt = [
+      'You are looking at a personal moodboard someone made to collect the feeling of a ' + (KINDS[b.kind].season ? 'season' : 'moment') + '.',
+      'Board name: ' + (b.name || '(untitled)'),
+      'Type: ' + label(b),
+      b.note ? 'What they wrote about it: ' + b.note : '',
+      caps.length ? 'Their photo captions: ' + caps.join(' | ') : '',
+      b.palette.length ? 'Colours drawn from the photos: ' + b.palette.join(', ') : '',
+      images.length ? images.length + ' of the ' + b.photos.length + ' photos are attached.' : 'No photos are attached; work from the text and colours.',
+      '',
+      'Write a short contemplation of this board: 60 to 100 words, in calm, concrete language. Notice what the images share: light, texture, colour, places, objects, pace. Speak to the person gently in the second person, and end with one quiet question or intention they could carry through this ' + (KINDS[b.kind].season ? 'season' : 'time') + '. No clichés, no exclamation marks, no lists.',
+      'Also give 3 to 5 single mood words, and a suggested board title of 2 to 5 words.',
+      'Reply with JSON only: {"reflection": string, "words": string[], "title": string}',
+    ].filter(Boolean).join('\n');
+    const out = await sample.json(prompt, images.length ? { images, modelTier: 'default' } : { modelTier: 'default' });
+    if (!boards[id]) return;
+    boards[id].reflection = {
+      text: str(out && out.reflection, 2000),
+      words: Array.isArray(out && out.words) ? out.words.map((w) => str(w, 40)).filter(Boolean).slice(0, 6) : [],
+      title: str(out && out.title, 120), at: Date.now(),
+    };
+    save(id);
+  } catch (e) {
+    const code = e && e.code;
+    toast(code === 'not_granted' ? 'Claude wasn’t allowed for this page. You can allow it from the artifact’s Permissions menu.'
+      : code === 'rate_limited' ? 'Claude is busy right now. Try again in a minute.'
+      : 'Claude couldn’t write a reflection this time. Try again.');
+  } finally { reflecting = false; render(); }
+}
+
+/* ---------- Rendering ---------- */
+function isEditing() {
+  const a = document.activeElement;
+  return !!a && $('#app').contains(a) && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
+}
+function route() {
+  const m = /^board-([a-z0-9]+)$/.exec(location.hash.slice(1));
+  return m ? { view: 'board', id: m[1] } : { view: 'home' };
+}
+function render() {
+  if (!loaded) return;
+  const r = route();
+  const app = $('#app');
+  const scroll = window.scrollY;
+  app.replaceChildren(r.view === 'board' && boards[r.id] ? renderBoard(r.id) : renderHome());
+  if (r.view === 'board' && boards[r.id]) { layoutWall(); window.scrollTo(0, scroll); }
+  const nt = $('#newTop'); nt.replaceChildren(icon('plus'), h('span', {}, 'New board'));
+}
+
+function renderHome() {
+  const list = Object.entries(boards).sort((a, b) => b[1].updated - a[1].updated);
+  const counts = {}; for (const [, b] of list) counts[b.kind] = (counts[b.kind] || 0) + 1;
+  const now = new Date(), cs = currentSeason(now);
+  const hasCurrent = list.some(([, b]) => b.kind === cs && b.year === now.getFullYear());
+  const shown = list.filter(([, b]) => filter === 'all' || (filter === 'seasons' ? KINDS[b.kind].season : b.kind === filter));
+
+  const intro = h('section', { class: 'wrap intro' },
+    h('div', {},
+      h('h1', {}, list.length ? 'Your boards' : 'Keep the feeling of a season'),
+      h('p', {}, list.length
+        ? list.length + (list.length === 1 ? ' board, ' : ' boards, ') + list.reduce((n, [, b]) => n + b.photos.length, 0) + ' photos. Open one to add pictures, or press Contemplate to sit with it.'
+        : 'Add photos and Mood Almanac lays them out as a board, pulls a colour palette from them, and gives you a quiet full-screen view to look at them slowly.')),
+    h('div', { class: 'actions' },
+      !hasCurrent && list.length ? h('button', { class: 'btn', type: 'button', style: { '--kc': KINDS[cs].color }, onclick: () => createBoard({ name: KINDS[cs].label + ' ' + now.getFullYear(), kind: cs, year: now.getFullYear() }) },
+        h('i', { class: 'dot' }), 'Start ' + KINDS[cs].label + ' ' + now.getFullYear()) : null,
+    ));
+
+  if (!list.length) {
+    return h('div', {}, intro, h('section', { class: 'wrap emptyhome' },
+      h('div', { class: 'meta' }, h('span', { class: 'k' }, 'Start with one')),
+      h('div', { class: 'seasonpick' }, KIND_ORDER.filter((k) => k !== 'other').map((k) => {
+        const yr = now.getFullYear();
+        return h('button', { type: 'button', style: { '--kc': KINDS[k].color }, onclick: () => KINDS[k].season ? createBoard({ name: KINDS[k].label + ' ' + yr, kind: k, year: yr }) : openNew(k) },
+          h('div', { class: 'sw' }), h('b', {}, KINDS[k].label), h('small', {}, KINDS[k].hint));
+      }))));
+  }
+
+  const chipBtn = (key, text, n, color) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(filter === key), style: color ? { '--kc': color } : null, onclick: () => { filter = key; try { sessionStorage.setItem('mood-almanac.filter', key); } catch (_) {} render(); } },
+    color ? h('i', { class: 'dot' }) : null, text, h('span', { class: 'n' }, n));
+  const seasonsN = list.filter(([, b]) => KINDS[b.kind].season).length;
+  const filters = h('div', { class: 'wrap filters', role: 'group', 'aria-label': 'Filter boards' },
+    chipBtn('all', 'All', list.length),
+    seasonsN ? chipBtn('seasons', 'Seasons', seasonsN) : null,
+    KIND_ORDER.filter((k) => counts[k]).map((k) => chipBtn(k, KINDS[k].label, counts[k], KINDS[k].color)));
+
+  const grid = h('section', { class: 'wrap boards' }, shown.map(([id, b]) => {
+    const ph = coverList(b);
+    const col = ph.length
+      ? h('div', { class: 'collage n' + ph.length }, ph.map((p) => { const img = h('img', { alt: p.caption || '', loading: 'lazy' }); setImg(img, p.id); return img; }))
+      : h('div', { class: 'collage empty', style: { '--kc': KINDS[b.kind].color } }, 'No photos yet');
+    return h('a', { class: 'card', href: '#board-' + id },
+      col,
+      b.palette.length ? h('div', { class: 'stripe', 'aria-hidden': 'true' }, b.palette.map((c) => h('i', { style: { background: safeHex(c) } }))) : null,
+      h('h3', {}, b.name || 'Untitled board'),
+      h('div', { class: 'meta' },
+        h('span', { class: 'k', style: { '--kc': KINDS[b.kind].color } }, h('i', { class: 'dot' }), label(b)),
+        h('span', { class: 'n' }, b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos'))));
+  }));
+  if (!shown.length) grid.append(h('p', { class: 'meta' }, 'No boards of this kind yet.'));
+  return h('div', {}, intro, filters, grid);
+}
+
+function renderBoard(id) {
+  const b = boards[id];
+  const K = KINDS[b.kind];
+  const canAdd = store.kind === 'local' || !!assets;
+  const pend = pendingUploads[id] || 0;
+
+  const kindSel = h('select', { class: 'sel', id: 'kind', 'aria-label': 'Board type', onchange: (e) => { b.kind = e.target.value; if (KINDS[b.kind].season && !b.year) b.year = new Date().getFullYear(); save(id); render(); } },
+    KIND_ORDER.map((k) => h('option', { value: k, selected: k === b.kind }, KINDS[k].label)));
+  const yearIn = h('input', { class: 'yearin', id: 'year', type: 'number', inputmode: 'numeric', min: '1900', max: '2200', placeholder: 'Year', value: b.year ? String(b.year) : '', 'aria-label': 'Year',
+    oninput: (e) => { const v = parseInt(e.target.value, 10); b.year = v >= 1900 && v <= 2200 ? v : null; save(id, { soon: true }); } });
+  const dateIn = b.kind === 'event' ? h('input', { class: 'datein', id: 'date', type: 'date', value: b.date, 'aria-label': 'Event date',
+    onchange: (e) => { b.date = e.target.value || ''; if (b.date) b.year = +b.date.slice(0, 4); save(id); } }) : null;
+
+  const head = h('header', { class: 'bhead', style: tints(b) }, h('div', { class: 'wrap' },
+    h('a', { class: 'back', href: '#' }, icon('back'), 'All boards'),
+    h('input', { class: 'titlein', id: 'title', value: b.name, placeholder: 'Name this board', 'aria-label': 'Board name', maxlength: '200',
+      oninput: (e) => { b.name = e.target.value; save(id, { soon: true }); } }),
+    h('div', { class: 'fields' }, kindSel, b.kind !== 'event' ? yearIn : null, dateIn),
+    h('textarea', { class: 'notein', id: 'note', rows: '2', placeholder: 'What is this board about? A feeling, a plan, a place you want to be…', 'aria-label': 'Notes', maxlength: '4000',
+      oninput: (e) => { b.note = e.target.value; save(id, { soon: true }); } }, b.note),
+    b.palette.length ? h('div', { class: 'palette', 'aria-label': 'Palette from your photos' }, b.palette.map((c) => h('button', { class: 'swatch', type: 'button', title: 'Copy ' + c,
+      onclick: () => { navigator.clipboard?.writeText(c).then(() => toast('Copied ' + c), () => toast(c)) ?? toast(c); } }, h('i', { style: { background: safeHex(c) } }), c.toUpperCase()))) : null,
+    h('div', { class: 'toolbar' },
+      canAdd ? h('button', { class: 'btn primary', type: 'button', onclick: () => pick(id) }, icon('plus'), 'Add photos') : null,
+      h('button', { class: 'btn', type: 'button', disabled: !b.photos.length, onclick: () => openStage(id, -1) }, icon('eye'), 'Contemplate'),
+      sample ? h('button', { class: 'btn', type: 'button', disabled: reflecting || (!b.photos.length && !b.note), onclick: () => reflect(id) }, icon('spark'), reflecting ? 'Claude is looking…' : b.reflection ? 'Reflect again' : 'Reflect with Claude') : null,
+      h('span', { class: 'spacer' }),
+      b.photos.length ? h('div', { class: 'seg', role: 'group', 'aria-label': 'Layout' },
+        h('button', { type: 'button', 'aria-pressed': String(b.layout === 'collage'), onclick: () => { b.layout = 'collage'; save(id); render(); } }, 'Collage'),
+        h('button', { type: 'button', 'aria-pressed': String(b.layout === 'grid'), onclick: () => { b.layout = 'grid'; save(id); render(); } }, 'Grid')) : null),
+  ));
+
+  const body = h('div', { class: 'wrap' });
+  if (b.reflection && b.reflection.text) {
+    const r = b.reflection;
+    body.append(h('section', { class: 'reflect' },
+      h('div', { class: 'lab' }, 'A reflection from Claude'),
+      h('p', {}, r.text),
+      r.words.length ? h('div', { class: 'words' }, r.words.map((w) => h('span', {}, w))) : null,
+      r.title && r.title !== b.name ? h('div', { class: 'row' }, 'Suggested title: ', h('b', {}, r.title),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => { b.name = r.title; save(id); render(); } }, 'Use it')) : null));
+  }
+
+  if (!b.photos.length && !pend) {
+    body.append(h('section', { class: 'drop' },
+      h('b', {}, canAdd ? 'Add the first photos' : 'No photos yet'),
+      h('span', {}, canAdd ? 'Choose photos, drag them here, or paste an image. Colours are picked from them as you go.' : 'Only people who can edit this app can add photos.'),
+      canAdd ? h('button', { class: 'btn primary', type: 'button', onclick: () => pick(id) }, icon('plus'), 'Choose photos') : null));
+  } else {
+    const wall = h('section', { class: 'wall' + (b.layout === 'grid' ? ' grid' : ''), id: 'wall', 'aria-label': 'Photos' });
+    b.photos.forEach((p, i) => wall.append(renderTile(id, b, p, i)));
+    for (let i = 0; i < pend; i++) wall.append(h('figure', { class: 'tile pending' }, h('div', { class: 'ph' }, 'Adding…')));
+    body.append(wall);
+  }
+
+  body.append(h('div', { class: 'danger-zone' }, confirmBoard
+    ? [h('span', {}, 'Delete this board' + (b.photos.length ? ' and its ' + b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos') : '') + '? This can’t be undone.'),
+       h('button', { class: 'btn solid-danger', type: 'button', onclick: () => deleteBoard(id) }, 'Delete board'),
+       h('button', { class: 'btn', type: 'button', onclick: () => { confirmBoard = false; render(); } }, 'Keep it')]
+    : [h('span', {}, 'Created ' + new Date(b.created).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })),
+       h('button', { class: 'btn ghost danger', type: 'button', onclick: () => { confirmBoard = true; render(); } }, icon('trash'), 'Delete board')]));
+
+  return h('div', {}, head, h('div', { class: 'bbody' }, body));
+}
+
+function renderTile(id, b, p, i) {
+  const img = h('img', { alt: p.caption || 'Photo ' + (i + 1), loading: 'lazy', decoding: 'async', style: b.layout === 'collage' ? { 'aspect-ratio': p.w + ' / ' + p.h } : null });
+  setImg(img, p.id);
+  const ph = h('button', { class: 'ph', type: 'button', 'aria-label': 'View ' + (p.caption || 'photo ' + (i + 1)), onclick: () => openStage(id, i) }, img);
+  const act = (name, title, fn, on) => h('button', { class: 'iconbtn' + (on ? ' on' : ''), type: 'button', title, 'aria-label': title, onclick: fn }, icon(name));
+  const move = (d) => { const j = i + d; if (j < 0 || j >= b.photos.length) return; [b.photos[i], b.photos[j]] = [b.photos[j], b.photos[i]]; save(id); render(); };
+  const fig = h('figure', { class: 'tile' + (p.feat && b.layout === 'collage' ? ' feat' : ''), 'data-id': p.id },
+    ph,
+    h('div', { class: 'acts' },
+      act('caption', 'Write a caption', () => { editingCaption = p.id; render(); setTimeout(() => $('#cap-' + p.id)?.focus(), 0); }),
+      act('star', b.cover === p.id ? 'This is the cover' : 'Use as cover', () => { b.cover = p.id; save(id); render(); toast('Cover photo set.'); }, b.cover === p.id),
+      b.layout === 'collage' ? act('wide', p.feat ? 'Show smaller' : 'Show larger', () => { p.feat = !p.feat; b.palette = boardPalette(b.photos); save(id); render(); }, p.feat) : null,
+      i > 0 ? act('left', 'Move earlier', () => move(-1)) : null,
+      i < b.photos.length - 1 ? act('right', 'Move later', () => move(1)) : null,
+      act('trash', 'Remove photo', () => { confirmDelete = p.id; render(); })),
+  );
+  if (editingCaption === p.id) {
+    fig.append(h('input', { class: 'capin', id: 'cap-' + p.id, value: p.caption, placeholder: 'Caption', maxlength: '500', 'aria-label': 'Caption',
+      oninput: (e) => { p.caption = e.target.value; save(id, { soon: true }); },
+      onkeydown: (e) => { if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); },
+      onblur: () => { editingCaption = null; save(id); render(); } }));
+  } else if (p.caption) fig.append(h('figcaption', {}, p.caption));
+  if (confirmDelete === p.id) {
+    fig.append(h('div', { class: 'confirm' }, 'Remove this photo from the board?',
+      h('div', {}, h('button', { class: 'btn solid-danger', type: 'button', onclick: () => removePhoto(id, p.id) }, 'Remove'),
+        h('button', { class: 'btn', type: 'button', onclick: () => { confirmDelete = null; render(); } }, 'Cancel'))));
+  }
+  return fig;
+}
+
+/* Masonry: each tile spans as many 4px rows as its real height needs. */
+let wallRO;
+function layoutWall() {
+  const wall = $('#wall'); if (!wall) return;
+  const fit = () => {
+    if (wall.classList.contains('grid')) { wall.querySelectorAll('.tile').forEach((t) => t.style.gridRowEnd = ''); return; }
+    wall.querySelectorAll('.tile').forEach((t) => { t.style.gridRowEnd = 'span ' + Math.ceil((t.getBoundingClientRect().height + 14) / 4); });
+  };
+  fit();
+  wallRO?.disconnect();
+  wallRO = new ResizeObserver(() => requestAnimationFrame(fit));
+  wallRO.observe(wall);
+  wall.querySelectorAll('.tile').forEach((t) => wallRO.observe(t));
+}
+
+/* ---------- New board modal ---------- */
+function openNew(kind) {
+  const now = new Date();
+  let k = kind || currentSeason(now);
+  const close = () => { scrim.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const nameIn = h('input', { type: 'text', id: 'nb-name', maxlength: '200', autocomplete: 'off' });
+  const yearIn = h('input', { type: 'number', id: 'nb-year', value: String(now.getFullYear()), min: '1900', max: '2200' });
+  const dateIn = h('input', { type: 'date', id: 'nb-date' });
+  const yearLab = h('label', {}, 'Year', yearIn);
+  const dateLab = h('label', {}, 'Date (optional)', dateIn);
+  const kinds = h('div', { class: 'kinds', role: 'group', 'aria-label': 'Type' });
+  const sync = () => {
+    kinds.replaceChildren(...KIND_ORDER.map((key) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(key === k), style: { '--kc': KINDS[key].color }, onclick: () => { k = key; sync(); } }, h('i', { class: 'dot' }), KINDS[key].label)));
+    nameIn.placeholder = KINDS[k].season ? KINDS[k].label + ' ' + (yearIn.value || now.getFullYear()) : k === 'event' ? 'e.g. Maya’s wedding' : k === 'place' ? 'e.g. Lisbon in May' : 'e.g. New flat';
+    dateLab.hidden = k !== 'event';
+  };
+  yearIn.addEventListener('input', sync);
+  const form = h('form', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'nb-h', onsubmit: (e) => {
+    e.preventDefault();
+    const y = parseInt(yearIn.value, 10);
+    const date = k === 'event' ? dateIn.value : '';
+    close();
+    createBoard({ name: nameIn.value.trim() || (KINDS[k].season ? nameIn.placeholder : ''), kind: k, year: date ? +date.slice(0, 4) : (y >= 1900 && y <= 2200 ? y : null), date });
+  } },
+    h('h2', { id: 'nb-h' }, 'New board'),
+    h('label', {}, 'Type', kinds),
+    h('label', {}, 'Name', nameIn),
+    h('div', { class: 'row2' }, yearLab, dateLab),
+    h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', onclick: close }, 'Cancel'), h('button', { class: 'btn primary', type: 'submit' }, 'Create board')));
+  const scrim = h('div', { class: 'scrim', onclick: (e) => { if (e.target === scrim) close(); } }, form);
+  sync();
+  document.body.append(scrim);
+  document.addEventListener('keydown', onKey);
+  setTimeout(() => nameIn.focus(), 0);
+}
+
+/* ---------- Photo picking, drag & drop, paste ---------- */
+let pickFor = null;
+function pick(id) { pickFor = id; $('#picker').value = ''; $('#picker').click(); }
+$('#picker').addEventListener('change', (e) => { if (pickFor) addFiles(pickFor, e.target.files); });
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => { if (route().view === 'board' && e.dataTransfer?.types?.includes('Files')) { dragDepth++; document.body.classList.add('dragging'); } });
+document.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+document.addEventListener('dragover', (e) => { if (route().view === 'board') e.preventDefault(); });
+document.addEventListener('drop', (e) => {
+  dragDepth = 0; document.body.classList.remove('dragging');
+  const r = route(); if (r.view !== 'board' || !boards[r.id]) return;
+  e.preventDefault();
+  if (e.dataTransfer?.files?.length) addFiles(r.id, e.dataTransfer.files);
+});
+document.addEventListener('paste', (e) => {
+  const r = route(); if (r.view !== 'board' || !boards[r.id] || $('.stage')) return;
+  const files = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/'));
+  if (files.length) { e.preventDefault(); addFiles(r.id, files); }
+});
+
+/* ---------- Contemplate stage ---------- */
+let stage = null;
+function openStage(id, start) {
+  const b = boards[id]; if (!b || !b.photos.length) return;
+  closeStage();
+  const DWELL = 8000;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = start, playing = true, timer = null, active = 0;
+  const layers = [h('img', { alt: '' }), h('img', { alt: '' })];
+  const r = b.reflection;
+  const opening = h('div', { class: 'opening' },
+    h('div', { class: 'k' }, label(b)),
+    h('h2', {}, b.name || 'Untitled board'),
+    b.palette.length ? h('div', { class: 'bands' }, b.palette.map((c) => h('i', { style: { background: safeHex(c) } }))) : null,
+    r && r.text ? h('p', {}, r.text) : b.note ? h('p', {}, b.note) : null);
+  const glow = h('div', { class: 'glow' });
+  const cap = h('div', { class: 'cap', 'aria-live': 'polite' });
+  const count = h('div', { class: 'count' });
+  const dots = h('div', { class: 'dots', 'aria-hidden': 'true' });
+  const bar = h('div', { class: 'bar' });
+  const playBtn = h('button', { class: 'iconbtn', type: 'button' });
+  const setPlayIcon = () => { playBtn.replaceChildren(icon(playing ? 'pause' : 'play')); playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playBtn.title = playing ? 'Pause (space)' : 'Play (space)'; };
+  const go = (n) => { i = n; show(); };
+  const next = () => go(i + 1 >= b.photos.length ? -1 : i + 1);
+  const prev = () => go(i - 1 < -1 ? b.photos.length - 1 : i - 1);
+  function schedule() {
+    clearTimeout(timer);
+    bar.classList.remove('run'); void bar.offsetWidth;
+    if (!playing) return;
+    const ms = i === -1 ? Math.max(6000, DWELL) : DWELL;
+    bar.style.animationDuration = ms + 'ms'; bar.classList.add('run');
+    timer = setTimeout(next, ms);
+  }
+  function show() {
+    const p = i >= 0 ? b.photos[i] : null;
+    const colors = p ? p.colors : b.palette;
+    const c = colors.length ? colors : [KINDS[b.kind].color];
+    glow.style.background = 'radial-gradient(circle at 25% 30%, ' + safeHex(c[0]) + ', transparent 55%), radial-gradient(circle at 75% 70%, ' + safeHex(c[1] || c[0]) + ', transparent 55%)';
+    dots.replaceChildren(...c.map((x) => h('i', { style: { background: safeHex(x) } })));
+    if (!p) {
+      layers.forEach((l) => l.classList.remove('on'));
+      opening.classList.add('on');
+      cap.textContent = b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos');
+      count.textContent = '';
+    } else {
+      opening.classList.remove('on');
+      const nextLayer = layers[1 - active], cur = layers[active];
+      const reveal = () => { nextLayer.classList.remove('on'); void nextLayer.offsetWidth; nextLayer.classList.add('on'); cur.classList.remove('on'); active = 1 - active; };
+      nextLayer.onload = reveal;
+      nextLayer.alt = p.caption || '';
+      const u = store.url(p.id);
+      const apply = (src) => { if (nextLayer.src && nextLayer.src.endsWith(src) && nextLayer.complete) reveal(); else nextLayer.src = src; };
+      if (typeof u === 'string') apply(u); else u.then(apply);
+      cap.textContent = p.caption || '';
+      count.textContent = (i + 1) + ' / ' + b.photos.length;
+      // Warm the next image.
+      const n = b.photos[i + 1]; if (n) { const pre = new Image(); setImg(pre, n.id); }
+    }
+    schedule();
+  }
+  playBtn.addEventListener('click', () => { playing = !playing; setPlayIcon(); schedule(); });
+  const btn = (name, label, fn) => h('button', { class: 'iconbtn', type: 'button', 'aria-label': label, title: label, onclick: fn }, icon(name));
+  const el = h('div', { class: 'stage', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Contemplate ' + (b.name || 'board') },
+    glow,
+    h('header', {}, h('div', { class: 'sname' }, b.name || 'Untitled board'),
+      document.fullscreenEnabled ? btn('full', 'Full screen', () => { (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()).catch(() => {}); }) : null,
+      btn('close', 'Close (Esc)', closeStage)),
+    h('div', { class: 'frame', onclick: (e) => { const x = e.clientX / window.innerWidth; x < 0.3 ? prev() : next(); } }, layers, opening),
+    h('footer', {}, cap, dots, count, h('div', { class: 'ctl' }, btn('left', 'Previous (←)', prev), playBtn, btn('right', 'Next (→)', next))),
+    bar);
+  if (reduce) layers.forEach((l) => l.style.transitionDuration = '.4s');
+  const onKey = (e) => {
+    if (e.key === 'Escape') closeStage();
+    else if (e.key === 'ArrowRight') next();
+    else if (e.key === 'ArrowLeft') prev();
+    else if (e.key === ' ') { e.preventDefault(); playBtn.click(); }
+  };
+  document.addEventListener('keydown', onKey);
+  let wake = null;
+  navigator.wakeLock?.request('screen').then((w) => { wake = w; }, () => {});
+  stage = { el, stop: () => { clearTimeout(timer); document.removeEventListener('keydown', onKey); wake?.release().catch(() => {}); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } };
+  setPlayIcon();
+  document.body.append(el);
+  document.documentElement.style.overflow = 'hidden';
+  show();
+  el.querySelector('.ctl .iconbtn:nth-child(2)').focus();
+}
+function closeStage() {
+  if (!stage) return;
+  stage.stop(); stage.el.remove(); stage = null;
+  document.documentElement.style.overflow = '';
+}
+
+/* ---------- Boot ---------- */
+$('#newTop').addEventListener('click', () => openNew());
+window.addEventListener('hashchange', () => { closeStage(); confirmBoard = false; confirmDelete = null; editingCaption = null; render(); window.scrollTo(0, 0); });
+
+(async function boot() {
+  try { const f = sessionStorage.getItem('mood-almanac.filter'); if (f) filter = f; } catch (_) {}
+  const use = (n) => (window.claude && window.claude.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
+  const [db, user, smp, ast] = await Promise.all([use('db'), use('user'), use('sample'), use('assets')]);
+  sample = smp; assets = ast;
+  const userId = user ? await user.id().catch(() => null) : null;
+  if (db && userId) {
+    try { store = await cloudBackend(db, userId); }
+    catch (_) { store = localBackend(); }
+  } else {
+    store = localBackend();
+    if (window.claude) setBanner('Sign in to Claude to keep your boards across devices. For now they’re saved in this browser only.');
+  }
+  loaded = true;
+  render();
+})();
+</script>
