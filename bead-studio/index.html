@@ -89,6 +89,9 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 .slider { display: grid; gap: 2px; font-size: 11.5px; font-weight: 600; color: var(--muted); flex: 1 1 130px; max-width: 210px; min-width: 0; }
 .slider span { display: flex; justify-content: space-between; gap: 6px; }
 .slider b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.sizer { display: grid; gap: 2px; flex: 2 1 220px; max-width: 340px; min-width: 0; }
+.sizer input { flex: 1; min-width: 0; }
+.sizer .chip { width: 38px; justify-content: center; font-size: 17px; padding: 0; }
 .shapehint { flex: 1 1 100%; font-size: 12px; color: var(--muted); margin: 0; }
 .stagebar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .stagebar b { color: var(--ink); font-weight: 600; }
@@ -257,6 +260,8 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
         <label class="slider" data-for="star"><span>Points: chubby ↔ sharp <b id="soDepthV"></b></span><input type="range" id="soDepth" min="20" max="80" step="1" value="55"></label>
         <label class="slider" data-for="moon"><span>Moon: thin ↔ full <b id="soThickV"></b></span><input type="range" id="soThick" min="12" max="80" step="1" value="38"></label>
         <label class="slider" data-for="moon"><span>Moon tips: short ↔ long <b id="soTipsV"></b></span><input type="range" id="soTips" min="0" max="100" step="1" value="35"></label>
+        <div class="sizer"><span class="slider" style="max-width:none"><span>Size <b id="soSizeV">11 beads wide</b></span></span>
+          <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="chip" id="soSmaller" aria-label="Smaller">−</button><input type="range" id="soSize" min="3" max="40" step="1" value="11" aria-label="Shape size in beads"><button class="chip" id="soBigger" aria-label="Bigger">+</button></div></div>
         <label class="slider"><span>Turn <b id="soRotV">0°</b></span><input type="range" id="soRot" min="-180" max="180" step="5" value="0"></label>
         <label class="slider"><span>Edge beads: fewer ↔ more <b id="soEdgeV"></b></span><input type="range" id="soEdge" min="15" max="85" step="1" value="50"></label>
         <label class="row small" style="gap:6px;font-weight:600"><input type="checkbox" id="soSquare" checked> Perfect proportions</label>
@@ -864,7 +869,7 @@ function showHover(cell) {
 // The box is kept in bead units (column, row) so it survives zooming. Shapes are tested at the
 // beads' real proportions, sampling a 4×4 grid of points inside each bead.
 let pending = null, shapeDrag = null;
-const shapeOpt = { kind: 'moon', style: 'fill', points: 5, depth: 0.45, thick: 0.38, tips: 0.35, rot: 0, edge: 0.5, square: true };
+const shapeOpt = { kind: 'moon', style: 'fill', points: 5, depth: 0.45, thick: 0.38, tips: 0.35, rot: 0, edge: 0.5, square: true, size: 11 };
 const toUnits = ([x, y]) => [(x - G.GL) / G.cw, (y - G.GT) / G.ch];
 const snapU = ([u, v]) => [Math.round(u * 2) / 2, Math.round(v * 2) / 2];
 function boxPx(b) { return { x0: G.GL + b.x0 * G.cw, y0: G.GT + b.y0 * G.ch, x1: G.GL + b.x1 * G.cw, y1: G.GT + b.y1 * G.ch }; }
@@ -925,6 +930,7 @@ function applyPending() {
   if (cells.length && P.example) P.example = false;
   const w = Math.abs(pending.box.x1 - pending.box.x0), h = Math.abs(pending.box.y1 - pending.box.y0);
   $('#hoverInfo').innerHTML = `<b>${esc(shapeOpt.kind[0].toUpperCase() + shapeOpt.kind.slice(1))}</b> · about ${Math.round(w)} × ${Math.round(h)} beads · ${cells.length} beads`;
+  syncShapeUI();
   changed();
 }
 function commitShape() { if (pending) { pending = null; renderSide(); render(); } syncShapeUI(); }
@@ -960,13 +966,28 @@ function shapeUp() {
     const cell = G.hit(G.GL + shapeDrag.tap[0] * G.cw, G.GT + shapeDrag.tap[1] * G.ch);
     if (!cell) { pending = null; undoStack.pop(); updUndo(); shapeDrag = null; render(); return; }
     const [x, y] = G.xy(cell[0], cell[1]), cu = (x - G.GL) / G.cw + 0.5, cv = (y - G.GT) / G.ch + 0.5;
-    const hw = 5.5, hh = shapeOpt.square ? 5.5 * G.cw / G.ch : 5.5;
+    const hw = shapeOpt.size / 2, hh = shapeOpt.square ? hw * G.cw / G.ch : hw;
     pending.box = { x0: cu - hw, y0: cv - hh, x1: cu + hw, y1: cv + hh };
     applyPending();
   }
   shapeDrag = null; renderSide(); render(); syncShapeUI();
 }
+function maxShapeSize() { return P ? Math.max(P.cols, Math.round(P.rows * (G ? G.ch / G.cw : 1))) + 2 : 40; }
+function setShapeSize(n) {
+  n = clamp(Math.round(n), 3, maxShapeSize());
+  shapeOpt.size = n;
+  if (pending) { // resize around the centre, keeping the shape's proportions
+    const b = pending.box, w = Math.abs(b.x1 - b.x0) || 1, h = Math.abs(b.y1 - b.y0) || 1;
+    const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, k = n / w;
+    pending.box = { x0: cx - n / 2, x1: cx + n / 2, y0: cy - h * k / 2, y1: cy + h * k / 2 };
+    applyPending(); render();
+  }
+  syncShapeUI();
+}
 function syncShapeUI() {
+  if (pending) shapeOpt.size = Math.round(Math.abs(pending.box.x1 - pending.box.x0));
+  $('#soSize').max = maxShapeSize(); $('#soSize').value = shapeOpt.size;
+  $('#soSizeV').textContent = `${shapeOpt.size} beads wide`;
   $$('#shapeKinds .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.kind === shapeOpt.kind));
   $$('#shapeStyles .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.style === shapeOpt.style));
   $$('.slider[data-for]').forEach(l => l.hidden = l.dataset.for !== shapeOpt.kind);
@@ -974,19 +995,22 @@ function syncShapeUI() {
   $('#soDepthV').textContent = ''; $('#soThickV').textContent = Math.round(shapeOpt.thick * 100) + '%';
   $('#soTipsV').textContent = ''; $('#soEdgeV').textContent = '';
   $('#soDone').hidden = !pending;
-  $('#shapeHint').textContent = pending ? 'Drag the shape to move it. Change the colour or sliders to adjust it. Tap Done when you like it.' : 'Drag on the chart to draw the shape, or tap to drop one 11 beads wide.';
+  $('#shapeHint').textContent = pending ? 'Drag the shape to move it. Use Size to make it bigger or smaller, and the other sliders to adjust it. Tap Done when you like it.' : `Drag on the chart to draw the shape, or tap to drop one ${shapeOpt.size} beads wide.`;
 }
 $$('#shapeKinds .chip').forEach(b => b.addEventListener('click', () => { shapeOpt.kind = b.dataset.kind; syncShapeUI(); applyPending(); }));
 $$('#shapeStyles .chip').forEach(b => b.addEventListener('click', () => { shapeOpt.style = b.dataset.style; syncShapeUI(); applyPending(); }));
 [['#soPoints', v => shapeOpt.points = +v], ['#soDepth', v => shapeOpt.depth = 1 - v / 100], ['#soThick', v => shapeOpt.thick = v / 100],
  ['#soTips', v => shapeOpt.tips = v / 100], ['#soRot', v => shapeOpt.rot = +v], ['#soEdge', v => shapeOpt.edge = v / 100]]
   .forEach(([id, f]) => $(id).addEventListener('input', e => { f(e.target.value); syncShapeUI(); applyPending(); }));
+$('#soSize').addEventListener('input', e => setShapeSize(+e.target.value));
+$('#soSmaller').addEventListener('click', () => setShapeSize(shapeOpt.size - 1));
+$('#soBigger').addEventListener('click', () => setShapeSize(shapeOpt.size + 1));
 $('#soSquare').addEventListener('change', e => { shapeOpt.square = e.target.checked; });
 $('#soDone').addEventListener('click', () => { commitShape(); syncShapeUI(); });
 syncShapeUI();
 
 /* ---------- tools UI ---------- */
-function setTool(t) { if (t !== 'shape') commitShape(); tool = t; $('#shapeBar').hidden = t !== 'shape'; render(); $$('.tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); board.style.cursor = t === 'pan' ? 'grab' : t === 'pick' ? 'copy' : 'crosshair'; }
+function setTool(t) { if (t !== 'shape') commitShape(); tool = t; $('#shapeBar').hidden = t !== 'shape'; if (t === 'shape') syncShapeUI(); render(); $$('.tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); board.style.cursor = t === 'pan' ? 'grab' : t === 'pick' ? 'copy' : 'crosshair'; }
 $$('.tool[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
 const MIRRORS = ['none', 'h', 'v', 'both'], MIRROR_LBL = { none: 'Mirror', h: '↔ L/R', v: '↕ T/B', both: '✛ 4-way' };
 $('#btnMirror').addEventListener('click', () => {
