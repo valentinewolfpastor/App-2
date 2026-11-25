@@ -8,7 +8,7 @@ Moodboards for seasons, events and places. Upload photos and they're laid out as
 
 - **Boards:** create a board for Spring, Summer, Autumn, Winter, an event (with a date), a place, or anything else. Filter the home page by type.
 - **Photos:** add them with the button, by dragging files onto a board, or by pasting an image. Photos are resized to 2000px on the long side before upload.
-- **Arrange:** switch between Collage (masonry) and Grid. Make a photo larger, move it earlier or later, set the cover, write a caption, or remove it.
+- **Arrange:** switch between Collage (masonry) and Grid from the floating toolbar. Make a photo larger, move it earlier or later, set the cover, write a caption, or remove it.
 - **Palette:** colours are picked from every photo and merged into a board palette. Tap a swatch to copy its hex code.
 - **Contemplate:** a dark full-screen slideshow that opens on the board's name and reflection, then drifts slowly through the photos. Use the arrow keys, space to pause and Esc to close.
 - **Reflect with Claude:** Claude looks at up to six photos, plus your notes and captions, and writes a short reflection, a few mood words and a title suggestion.

@@ -2,245 +2,277 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a quiet gallery wall. Boards hang as collage cards; a board opens to a tinted header
-   drawn from its own photos, a masonry wall, and a dark stage for slow viewing. */
+/* Layout: photos lead, chrome recedes. Monochrome UI on a clean ground; all colour comes from the
+   photos (cover images, a palette aura behind each board title, paint-chip swatches). Controls live
+   in one floating glass dock. */
 :root {
-  --bg: #eef0ed;
-  --surface: #fbfcfa;
-  --ink: #1b1f1c;
-  --muted: #5f6762;
-  --line: #d4d9d4;
-  --accent: #2f4a3c;
-  --accent-ink: #f6f8f5;
-  --danger: #a3402c;
-  --stage: #0c0e0d;
-  --stage-ink: #eceeea;
-  --stage-muted: #9aa19c;
-  --shadow: 0 1px 2px rgb(20 30 24 / .06), 0 8px 24px -12px rgb(20 30 24 / .18);
-  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --radius: 6px;
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --ink: #121212;
+  --muted: #74716c;
+  --faint: #a9a6a0;
+  --line: #e8e6e2;
+  --glass: rgb(255 255 255 / .74);
+  --glass-line: rgb(0 0 0 / .07);
+  --danger: #c2412d;
+  --stage: #070707;
+  --stage-ink: #f2f1ee;
+  --stage-muted: #8e8b86;
+  --aura: .42;
+  --shadow: 0 1px 1px rgb(0 0 0 / .04), 0 12px 32px -12px rgb(0 0 0 / .16);
+  --font-display: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111412; --surface: #191d1a; --ink: #e6eae6; --muted: #9aa39d; --line: #2a302c;
-    --accent: #a9c8b5; --accent-ink: #111412; --danger: #e48a73;
-    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 10px 28px -14px rgb(0 0 0 / .6);
+    --bg: #0b0b0b; --surface: #161616; --ink: #f3f2ef; --muted: #8f8c87; --faint: #5d5b58; --line: #252423;
+    --glass: rgb(30 30 30 / .72); --glass-line: rgb(255 255 255 / .08); --danger: #ef7a62; --aura: .3;
+    --shadow: 0 1px 1px rgb(0 0 0 / .3), 0 14px 36px -12px rgb(0 0 0 / .7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #111412; --surface: #191d1a; --ink: #e6eae6; --muted: #9aa39d; --line: #2a302c;
-  --accent: #a9c8b5; --accent-ink: #111412; --danger: #e48a73;
-  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 10px 28px -14px rgb(0 0 0 / .6);
+  --bg: #0b0b0b; --surface: #161616; --ink: #f3f2ef; --muted: #8f8c87; --faint: #5d5b58; --line: #252423;
+  --glass: rgb(30 30 30 / .72); --glass-line: rgb(255 255 255 / .08); --danger: #ef7a62; --aura: .3;
+  --shadow: 0 1px 1px rgb(0 0 0 / .3), 0 14px 36px -12px rgb(0 0 0 / .7);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg); color: var(--ink);
-  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 button, input, textarea, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wrap {
-  max-width: 1240px; margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--kc, var(--muted)); display: inline-block; }
 
 /* ---------- Top bar ---------- */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in oklab, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-.top .wrap { display: flex; align-items: center; gap: 16px; padding-block: 12px; }
-.mark { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; }
-.mark b { font-family: var(--font-display); font-weight: 700; font-size: 21px; letter-spacing: -.02em; }
-.mark span { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); }
+.top .wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.mark { font-family: var(--font-display); font-size: 25px; letter-spacing: -.01em; color: var(--ink); text-decoration: none; margin-right: auto; line-height: 1; }
+.mark em { font-style: italic; }
 
-.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: border-color .15s, background .15s; }
-.btn:hover { border-color: color-mix(in oklab, var(--ink) 35%, var(--line)); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn.primary:hover { background: color-mix(in oklab, var(--accent) 88%, var(--ink)); }
-.btn.ghost { background: transparent; }
-.btn.danger { color: var(--danger); }
-.btn.solid-danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
-.btn[disabled] { opacity: .5; cursor: default; }
-.btn svg { width: 16px; height: 16px; flex: none; }
-.iconbtn { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; border: 0; background: transparent; color: inherit; }
-.iconbtn:hover { background: color-mix(in oklab, var(--ink) 8%, transparent); }
-.iconbtn svg { width: 17px; height: 17px; }
-
-.banner { font-size: 13px; color: var(--muted); padding-block: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; font-weight: 500; white-space: nowrap; transition: transform .15s, background .15s, border-color .15s; }
+.btn:hover { border-color: var(--faint); }
+.btn:active { transform: scale(.97); }
+.btn.dark { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.dark:hover { opacity: .88; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.btn.red { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.redtext { color: var(--danger); }
+.btn[disabled] { opacity: .4; pointer-events: none; }
+.btn svg { width: 17px; height: 17px; flex: none; }
+.round { width: 40px; padding: 0; }
+.banner { font-size: 13px; color: var(--muted); padding-block: 6px; }
 .banner:empty { display: none; }
 
 /* ---------- Home ---------- */
-.intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; padding-block: 40px 20px; }
-.intro h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 48px); line-height: 1.02; letter-spacing: -.03em; margin: 0 0 10px; text-wrap: balance; }
-.intro p { margin: 0; color: var(--muted); max-width: 52ch; }
-.intro .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mast { padding-block: clamp(36px, 7vw, 88px) clamp(24px, 4vw, 44px); display: grid; gap: 18px; }
+.mast h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(48px, 9vw, 120px); line-height: .92; letter-spacing: -.025em; margin: 0; text-wrap: balance; max-width: 14ch; }
+.mast h1 em { font-style: italic; color: var(--muted); }
+.mast p { margin: 0; color: var(--muted); font-size: 16px; max-width: 46ch; }
 
-.filters { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 4px 20px; }
-.chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); }
-.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
-.chip .n { font-family: var(--font-mono); font-size: 11px; opacity: .7; }
-.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--kc, var(--muted)); }
+.tabs { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: none; padding: 0 0 12px; font-size: 14px; color: var(--muted); white-space: nowrap; position: relative; display: inline-flex; align-items: center; gap: 7px; }
+.tab sup { font-family: var(--font-mono); font-size: 10px; color: var(--faint); }
+.tab[aria-pressed="true"] { color: var(--ink); }
+.tab[aria-pressed="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1.5px; background: var(--ink); }
 
-.boards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 28px 20px; padding-bottom: 64px; }
-.card { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; min-width: 0; }
-.collage { aspect-ratio: 4 / 3; max-width: 100%; border-radius: var(--radius); overflow: hidden; display: grid; gap: 3px; background: var(--line); box-shadow: var(--shadow); transition: transform .25s ease; }
-.card:hover .collage { transform: translateY(-2px); }
-.collage img { width: 100%; height: 100%; object-fit: cover; display: block; background: color-mix(in oklab, var(--line) 60%, var(--bg)); }
-.collage.n2 { grid-template-columns: 1fr 1fr; }
-.collage.n3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
-.collage.n3 img:first-child { grid-row: span 2; }
-.collage.n4 { grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
-.collage.n4 img:first-child { grid-row: span 2; }
-.collage.n4 img:nth-child(4) { grid-column: 2 / span 2; }
-.collage.empty { background: linear-gradient(135deg, color-mix(in oklab, var(--kc) 45%, var(--bg)), color-mix(in oklab, var(--kc) 12%, var(--bg))); place-items: center; color: color-mix(in oklab, var(--kc) 60%, var(--ink)); font-size: 13px; }
-.stripe { display: flex; height: 6px; border-radius: 3px; overflow: hidden; }
-.stripe i { flex: 1; }
-.card h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -.01em; margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; color: var(--muted); }
-.meta .k { display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; font-size: 11px; }
-.meta .n { font-family: var(--font-mono); }
+.boards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 44px 22px; padding-bottom: 96px; }
+.card { display: grid; gap: 12px; text-decoration: none; color: inherit; min-width: 0; }
+.cover { position: relative; aspect-ratio: 4 / 5; max-width: 100%; border-radius: 16px; overflow: hidden; background: var(--line); }
+.cover > img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+.card:hover .cover > img { transform: scale(1.04); }
+.cover .thumbs { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; }
+.cover .thumbs img { width: 38px; height: 38px; border-radius: 8px; border: 2px solid rgb(255 255 255 / .9); object-fit: cover; display: block; }
+.cover .chips { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 3px; padding: 5px 7px; border-radius: 999px; background: rgb(255 255 255 / .78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.cover .chips i { width: 10px; height: 10px; border-radius: 50%; }
+.cover.empty { display: grid; place-items: center; background: radial-gradient(120% 90% at 20% 10%, color-mix(in srgb, var(--kc) 55%, var(--bg)), transparent 60%), radial-gradient(100% 80% at 90% 100%, color-mix(in srgb, var(--kc) 30%, var(--bg)), var(--surface)); }
+.cover.empty span { font-family: var(--font-display); font-style: italic; font-size: 22px; color: color-mix(in srgb, var(--kc) 55%, var(--ink)); }
+.card h3 { font-family: var(--font-display); font-weight: 400; font-size: 28px; line-height: 1.05; letter-spacing: -.01em; margin: 0; overflow-wrap: anywhere; }
+.card .eyebrow { gap: 8px; }
+.newcard { border: 1px dashed var(--faint); border-radius: 16px; aspect-ratio: 4 / 5; max-width: 100%; display: grid; place-content: center; justify-items: center; gap: 10px; background: transparent; color: var(--muted); font-size: 14px; transition: border-color .2s, color .2s; padding: 16px; text-align: center; }
+.newcard:hover { border-color: var(--ink); color: var(--ink); }
+.newcard .plus { width: 52px; height: 52px; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; }
+.newcard .plus svg { width: 22px; height: 22px; }
+.newcard b { font-family: var(--font-display); font-weight: 400; font-size: 24px; color: var(--ink); }
 
-.emptyhome { display: grid; gap: 24px; padding-block: 24px 80px; }
-.seasonpick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-.seasonpick button { text-align: left; border: 1px solid var(--line); border-radius: var(--radius); padding: 0; background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
-.seasonpick button:hover { border-color: var(--kc); }
-.seasonpick .sw { height: 70px; background: linear-gradient(120deg, color-mix(in oklab, var(--kc) 70%, var(--bg)), color-mix(in oklab, var(--kc) 25%, var(--bg))); }
-.seasonpick b { font-family: var(--font-display); font-size: 17px; font-weight: 600; padding: 10px 12px 0; }
-.seasonpick small { color: var(--muted); padding: 0 12px 12px; font-size: 12px; }
+.seasons { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; padding-bottom: 96px; }
+.season { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border: 0; border-radius: 18px; overflow: hidden; text-align: left; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; color: #fff; background: var(--kc); isolation: isolate; transition: transform .3s cubic-bezier(.2,.7,.2,1); }
+.season::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(90% 70% at 80% 10%, rgb(255 255 255 / .45), transparent 60%), radial-gradient(80% 60% at 10% 100%, rgb(0 0 0 / .35), transparent 70%); }
+.season:hover { transform: translateY(-4px); }
+.season b { font-family: var(--font-display); font-weight: 400; font-size: 38px; line-height: 1; }
+.season small { font-size: 13px; opacity: .85; }
 
 /* ---------- Board ---------- */
-.bhead { background: linear-gradient(115deg, color-mix(in oklab, var(--c1) 30%, var(--bg)) 0%, color-mix(in oklab, var(--c2) 22%, var(--bg)) 55%, color-mix(in oklab, var(--c3) 26%, var(--bg)) 100%); border-bottom: 1px solid var(--line); }
-.bhead .wrap { padding-block: 22px 26px; display: grid; gap: 16px; }
-.back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; width: fit-content; }
+.board { position: relative; isolation: isolate; }
+.aura { position: absolute; inset: -120px 0 auto; height: 760px; z-index: -1; overflow: hidden; pointer-events: none; opacity: var(--aura); -webkit-mask-image: linear-gradient(#000 35%, transparent 95%); mask-image: linear-gradient(#000 35%, transparent 95%); }
+.aura i { position: absolute; width: 60vw; max-width: 720px; aspect-ratio: 1; border-radius: 50%; filter: blur(90px); }
+.aura i:nth-child(1) { background: var(--c1); left: -10%; top: 0; }
+.aura i:nth-child(2) { background: var(--c2); left: 35%; top: -18%; }
+.aura i:nth-child(3) { background: var(--c3); right: -12%; top: 10%; }
+.bhead { padding-block: 22px 28px; display: grid; gap: 18px; }
+.back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); text-decoration: none; width: fit-content; margin-left: -4px; }
 .back:hover { color: var(--ink); }
-.back svg { width: 14px; height: 14px; }
-.titlein { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5.5vw, 56px); letter-spacing: -.03em; line-height: 1.05; border: 0; background: transparent; padding: 0; width: 100%; min-width: 0; border-bottom: 1px dashed transparent; }
-.titlein:hover, .titlein:focus { border-bottom-color: color-mix(in oklab, var(--ink) 30%, transparent); outline: none; }
-.titlein::placeholder { color: color-mix(in oklab, var(--ink) 35%, transparent); }
-.fields { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.sel, .yearin, .datein { border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent); background: color-mix(in oklab, var(--surface) 70%, transparent); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
-.yearin { width: 84px; font-family: var(--font-mono); }
-.notein { width: 100%; max-width: 70ch; min-height: 46px; border: 0; background: transparent; resize: vertical; padding: 0; font-size: 16px; line-height: 1.55; color: var(--ink); }
-.notein::placeholder { color: color-mix(in oklab, var(--ink) 45%, transparent); }
-.notein:focus { outline: none; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.toolbar .spacer { flex: 1; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface); }
-.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.back svg { width: 16px; height: 16px; }
+.bhead .eyebrow button { border: 0; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--faint); }
+.titlein { font-family: var(--font-display); font-weight: 400; font-size: clamp(52px, 10vw, 128px); line-height: .95; letter-spacing: -.03em; border: 0; background: transparent; padding: 0; margin: 0; width: 100%; min-width: 0; resize: none; overflow: hidden; display: block; field-sizing: content; }
+.titlein:focus { outline: none; }
+.titlein::placeholder { color: var(--faint); }
+.notein { width: 100%; max-width: 60ch; border: 0; background: transparent; resize: none; padding: 0; font-size: 17px; line-height: 1.6; color: var(--muted); field-sizing: content; min-height: 1.6em; }
+.notein:focus { outline: none; color: var(--ink); }
+.notein::placeholder { color: var(--faint); }
 
 .palette { display: flex; flex-wrap: wrap; gap: 8px; }
-.swatch { display: flex; align-items: center; gap: 8px; border: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); background: color-mix(in oklab, var(--surface) 75%, transparent); border-radius: 999px; padding: 3px 10px 3px 3px; font-family: var(--font-mono); font-size: 12px; }
-.swatch i { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
+.chip { border: 0; padding: 0; background: none; display: grid; gap: 6px; justify-items: start; }
+.chip i { width: 54px; height: 72px; border-radius: 10px; display: block; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); transition: transform .2s cubic-bezier(.2,.7,.2,1); }
+.chip:hover i { transform: translateY(-3px); }
+.chip span { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: .04em; }
 
-.bbody .wrap { padding-block: 24px 72px; display: grid; gap: 22px; }
-.reflect { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 10px; max-width: 780px; }
-.reflect .lab { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; display: flex; gap: 10px; align-items: center; }
-.reflect p { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 1.45; letter-spacing: -.005em; text-wrap: pretty; }
-.words { display: flex; flex-wrap: wrap; gap: 6px; }
-.words span { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted); }
-.reflect .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.reflect { display: grid; gap: 14px; max-width: 760px; padding-block: 8px 12px; }
+.reflect .eyebrow svg { width: 13px; height: 13px; }
+.reflect p { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 30px); line-height: 1.3; letter-spacing: -.005em; text-wrap: pretty; }
+.reflect .words { display: flex; flex-wrap: wrap; gap: 6px; }
+.reflect .words span { font-size: 13px; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.reflect .sugg { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.reflect .sugg b { font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: 20px; color: var(--ink); }
 
-.drop { border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 44px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
-.drop b { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink); }
-body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--accent); outline-offset: 6px; }
+.bbody { padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 28px; }
+.drop { border-radius: 20px; padding: clamp(40px, 8vw, 90px) 24px; text-align: center; display: grid; gap: 14px; justify-items: center; background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px dashed var(--faint); }
+.drop b { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, 4vw, 44px); line-height: 1; }
+.drop span { color: var(--muted); max-width: 40ch; }
+body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--ink); outline-offset: 8px; border-radius: 12px; }
 
-.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); grid-auto-rows: 4px; column-gap: 14px; grid-auto-flow: dense; }
-.wall.grid { grid-auto-rows: auto; row-gap: 14px; }
-.tile { position: relative; margin: 0 0 14px; min-width: 0; align-self: start; }
-.wall:not(.grid) .tile img { height: auto; }
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); grid-auto-rows: 4px; column-gap: 10px; grid-auto-flow: dense; }
+.wall.grid { grid-auto-rows: auto; row-gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.tile { position: relative; margin: 0 0 10px; min-width: 0; align-self: start; }
 .wall.grid .tile { margin: 0; }
 .tile.feat { grid-column: span 2; }
-.tile .ph { position: relative; border-radius: var(--radius); overflow: hidden; background: color-mix(in oklab, var(--line) 60%, var(--bg)); cursor: zoom-in; display: block; width: 100%; padding: 0; border: 0; }
-.tile img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
-.tile .ph:hover img { transform: scale(1.02); }
+.tile .ph { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--line); cursor: zoom-in; }
+.tile img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .9s cubic-bezier(.2,.7,.2,1); }
+.wall:not(.grid) .tile img { height: auto; }
+.tile .ph:hover img { transform: scale(1.03); }
 .wall.grid .tile .ph { aspect-ratio: 1; }
-.tile figcaption { font-size: 13px; color: var(--muted); padding: 7px 2px 0; overflow-wrap: anywhere; }
-.tile .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; background: color-mix(in oklab, var(--surface) 90%, transparent); border-radius: 999px; padding: 2px; box-shadow: var(--shadow); opacity: 0; transition: opacity .15s; }
-.tile:hover .acts, .tile:focus-within .acts { opacity: 1; }
-@media (hover: none) { .tile .acts { opacity: 1; } }
-.tile .acts .iconbtn { width: 30px; height: 30px; }
-.tile .acts .iconbtn.on { color: var(--accent); }
-.tile .capin { width: 100%; margin-top: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 6px 8px; font-size: 13px; }
-.tile .confirm { position: absolute; inset: 0; display: grid; place-content: center; gap: 10px; text-align: center; background: color-mix(in oklab, var(--surface) 92%, transparent); border-radius: var(--radius); font-size: 13px; padding: 12px; }
+.tile figcaption { font-size: 13px; color: var(--muted); padding: 8px 2px 2px; overflow-wrap: anywhere; }
+.tile .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.tile:hover .acts, .tile:focus-within .acts { opacity: 1; transform: none; }
+@media (hover: none) { .tile .acts { opacity: 1; transform: none; } }
+.tile .acts button { width: 30px; height: 30px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgb(255 255 255 / .85); color: #121212; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgb(0 0 0 / .12); }
+.tile .acts button:hover { background: #fff; }
+.tile .acts button.on { background: #121212; color: #fff; }
+.tile .acts svg { width: 15px; height: 15px; }
+.tile .badge { position: absolute; left: 8px; top: 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / .85); color: #121212; pointer-events: none; }
+.tile .capin { width: 100%; margin-top: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+.tile .confirm { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; text-align: center; border-radius: 10px; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: 14px; padding: 12px; }
 .tile .confirm div { display: flex; gap: 6px; justify-content: center; }
-.tile.pending .ph { display: grid; place-items: center; aspect-ratio: 4/3; color: var(--muted); font-size: 12px; }
-.tile.pending .ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in oklab, var(--surface) 50%, transparent) 50%, transparent 70%); animation: shimmer 1.4s infinite; }
+.tile .confirm .btn { height: 34px; padding: 0 14px; }
+.tile.pending .ph { aspect-ratio: 4 / 5; cursor: default; }
+.tile.pending .ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--surface) 70%, transparent) 50%, transparent 70%); animation: shimmer 1.3s infinite; }
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
-.danger-zone { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+/* ---------- Dock ---------- */
+.dock { position: fixed; z-index: 8; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); box-shadow: var(--shadow); max-width: calc(100vw - 24px); }
+.dock .btn { height: 44px; border: 0; background: transparent; padding: 0 16px; }
+.dock .btn:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.dock .btn.dark { background: var(--ink); color: var(--bg); }
+.dock .btn.round { width: 44px; padding: 0; }
+.dock .btn.on { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.dock .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+.dock .spin svg { animation: spin 1.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- Modal ---------- */
-.scrim { position: fixed; inset: 0; z-index: 30; background: rgb(10 14 12 / .45); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-.modal { background: var(--surface); color: var(--ink); border-radius: 10px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 24px; display: grid; gap: 18px; box-shadow: 0 30px 80px -20px rgb(0 0 0 / .5); }
-.modal h2 { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: -.02em; margin: 0; }
-.modal label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
-.modal input[type="text"], .modal input[type="number"], .modal input[type="date"] { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 10px 12px; font-size: 16px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink); width: 100%; }
+/* ---------- Sheet ---------- */
+.scrim { position: fixed; inset: 0; z-index: 30; background: rgb(0 0 0 / .4); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { transform: translateY(16px); opacity: 0; } }
+.sheet { background: var(--surface); color: var(--ink); border-radius: 24px; width: min(500px, 100%); max-height: 100%; overflow: auto; padding: 28px; display: grid; gap: 22px; box-shadow: 0 40px 100px -30px rgb(0 0 0 / .55); animation: rise .28s cubic-bezier(.2,.7,.2,1); }
+.sheet h2 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-height: 1; letter-spacing: -.02em; margin: 0; }
+.field { display: grid; gap: 8px; }
+.field > span { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.field input { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; height: 48px; padding: 0 14px; font-size: 16px; width: 100%; color: var(--ink); }
+.field input:focus { outline: none; border-color: var(--ink); }
 .kinds { display: flex; flex-wrap: wrap; gap: 6px; }
-.kinds .chip { color: var(--ink); text-transform: none; letter-spacing: 0; font-weight: 500; }
-.kinds .chip[aria-pressed="true"] { background: color-mix(in oklab, var(--kc) 22%, var(--surface)); border-color: var(--kc); color: var(--ink); }
+.kind { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; font-size: 14px; }
+.kind[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+.sheet .foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.sheet .danger { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
 
 /* ---------- Stage (contemplate) ---------- */
-.stage { position: fixed; inset: 0; z-index: 40; background: var(--stage); color: var(--stage-ink); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
-.stage .glow { position: absolute; inset: -20%; filter: blur(80px); opacity: .35; transition: background 2.5s ease; pointer-events: none; }
-.stage header, .stage footer { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: 14px; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
-.stage footer { padding-top: 14px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; }
-.stage .sname { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stage .iconbtn { color: var(--stage-ink); width: 40px; height: 40px; }
-.stage .iconbtn:hover { background: rgb(255 255 255 / .1); }
-.stage .frame { position: relative; z-index: 1; margin: 0 max(18px, env(safe-area-inset-left, 0px)); min-height: 0; }
+.stage { position: fixed; inset: 0; z-index: 40; background: var(--stage); color: var(--stage-ink); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; animation: fade .5s ease; }
+.stage .glow { position: absolute; inset: -20%; filter: blur(90px); opacity: .32; transition: background 2.5s ease; pointer-events: none; }
+.stage header, .stage footer { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.stage header { padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: 12px; }
+.stage footer { padding-top: 12px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; }
+.stage .sname { font-family: var(--font-display); font-size: 24px; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage .ib { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 0; background: transparent; color: var(--stage-ink); }
+.stage .ib:hover { background: rgb(255 255 255 / .1); }
+.stage .ib.main { background: var(--stage-ink); color: var(--stage); }
+.stage .ib svg { width: 18px; height: 18px; }
+.stage .frame { position: relative; z-index: 1; margin: 0 max(20px, env(safe-area-inset-left, 0px)); min-height: 0; }
 .stage .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1.6s ease; }
 .stage .frame img.on { opacity: 1; animation: drift 11s ease-out forwards; }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.045); } }
-.stage .opening { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 18px; padding: 20px; opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
+.stage .opening { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 22px; padding: 20px; opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
 .stage .opening.on { opacity: 1; }
-.stage .opening .k { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--stage-muted); }
-.stage .opening h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(38px, 8vw, 88px); letter-spacing: -.035em; line-height: 1; margin: 0; text-wrap: balance; }
-.stage .opening p { max-width: 54ch; margin: 0 auto; color: color-mix(in oklab, var(--stage-ink) 82%, var(--stage)); font-size: 17px; line-height: 1.6; }
-.stage .opening .bands { display: flex; justify-content: center; gap: 0; height: 10px; width: min(320px, 70vw); margin: 0 auto; border-radius: 5px; overflow: hidden; }
-.stage .opening .bands i { flex: 1; }
-.stage .cap { flex: 1 1 260px; min-width: 0; font-size: 15px; color: color-mix(in oklab, var(--stage-ink) 88%, var(--stage)); }
-.stage .count { font-family: var(--font-mono); font-size: 12px; color: var(--stage-muted); }
+.stage .opening .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--stage-muted); }
+.stage .opening h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(56px, 11vw, 140px); letter-spacing: -.03em; line-height: .92; margin: 0; text-wrap: balance; }
+.stage .opening p { max-width: 50ch; margin: 0 auto; font-family: var(--font-display); font-style: italic; font-size: clamp(19px, 2.2vw, 24px); line-height: 1.4; color: color-mix(in srgb, var(--stage-ink) 80%, var(--stage)); }
+.stage .opening .bands { display: flex; gap: 6px; justify-content: center; }
+.stage .opening .bands i { width: 26px; height: 34px; border-radius: 6px; }
+.stage .cap { flex: 1 1 260px; min-width: 0; font-family: var(--font-display); font-style: italic; font-size: 20px; color: color-mix(in srgb, var(--stage-ink) 90%, var(--stage)); }
+.stage .count { font-family: var(--font-mono); font-size: 11px; color: var(--stage-muted); letter-spacing: .06em; }
 .stage .dots { display: flex; gap: 5px; }
-.stage .dots i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .15); }
-.stage .ctl { display: flex; gap: 4px; }
-.stage .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / .5); width: 0; z-index: 3; }
+.stage .dots i { width: 10px; height: 10px; border-radius: 50%; }
+.stage .ctl { display: flex; gap: 6px; align-items: center; }
+.stage .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / .45); width: 0; z-index: 3; }
 .stage .bar.run { animation: fill linear forwards; }
 @keyframes fill { to { width: 100%; } }
 
-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: var(--shadow); }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.loading { padding-block: 80px; color: var(--muted); text-align: center; }
+.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: var(--shadow); animation: rise .25s ease; }
+.loading { padding-block: 100px; color: var(--muted); text-align: center; font-family: var(--font-display); font-style: italic; font-size: 24px; }
 
-@media (max-width: 560px) {
-  .mark span { display: none; }
-  .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; }
-  .tile { margin-bottom: 10px; }
-  .tile.feat { grid-column: span 2; }
+@media (max-width: 600px) {
+  .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 6px; }
+  .wall.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 4px; column-gap: 4px; }
+  .tile { margin-bottom: 6px; }
+  .tile .ph { border-radius: 8px; }
+  .wall.grid .tile .ph { border-radius: 4px; }
+  .boards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 12px; }
+  .cover { border-radius: 12px; }
+  .cover .thumbs { display: none; }
+  .card h3 { font-size: 22px; }
+  .newcard b { font-size: 20px; }
+  .seasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .season b { font-size: 30px; }
+  .dock .lbl { display: none; }
+  .palette { gap: 6px; }
+  .chip i { width: 44px; height: 58px; border-radius: 8px; }
+  .chip span { font-size: 9px; }
+  #newTop span { display: none; }
+  #newTop { width: 40px; padding: 0; }
+  .dock .btn { padding: 0 14px; }
   .row2 { grid-template-columns: 1fr; }
   .stage .frame { margin: 0; }
+  .scrim { place-items: end center; padding: 0; }
+  .sheet { border-radius: 24px 24px 0 0; width: 100%; padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .2s !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .15s !important; }
   .stage .frame img.on { animation: none; }
 }
 </style>
 
 <div class="top"><div class="wrap">
-  <a class="mark" href="#"><b>Mood Almanac</b><span>Seasons · Events · Places</span></a>
-  <button class="btn primary" id="newTop" type="button">New board</button>
+  <a class="mark" href="#">Mood <em>Almanac</em></a>
+  <button class="btn dark" id="newTop" type="button">New board</button>
 </div></div>
 <div class="wrap"><div class="banner" id="banner"></div></div>
 <main id="app"><div class="wrap loading">Opening your boards…</div></main>
@@ -249,13 +281,13 @@ body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--accent); ou
 <script>
 /* ---------- Constants ---------- */
 const KINDS = {
-  spring: { label: 'Spring', color: '#8fb36a', season: true, hint: 'Blossom, rain, first light' },
-  summer: { label: 'Summer', color: '#dca23a', season: true, hint: 'Heat, salt, long evenings' },
-  autumn: { label: 'Autumn', color: '#b5562c', season: true, hint: 'Leaves, wool, low sun' },
-  winter: { label: 'Winter', color: '#7896b0', season: true, hint: 'Frost, candles, quiet' },
-  event:  { label: 'Event',  color: '#94629f', hint: 'A wedding, a party, a launch' },
-  place:  { label: 'Place',  color: '#478475', hint: 'A trip, a city, a room' },
-  other:  { label: 'Other',  color: '#8a8a7e', hint: 'Anything else' },
+  spring: { label: 'Spring', color: '#86a85f', season: true, hint: 'Blossom, rain, first light' },
+  summer: { label: 'Summer', color: '#d39a2f', season: true, hint: 'Heat, salt, long evenings' },
+  autumn: { label: 'Autumn', color: '#a9502a', season: true, hint: 'Leaves, wool, low sun' },
+  winter: { label: 'Winter', color: '#6f8ba6', season: true, hint: 'Frost, candles, quiet' },
+  event:  { label: 'Event',  color: '#8b5b97', hint: 'A wedding, a party, a launch' },
+  place:  { label: 'Place',  color: '#3f7a6c', hint: 'A trip, a city, a room' },
+  other:  { label: 'Other',  color: '#85827a', hint: 'Anything else' },
 };
 const KIND_ORDER = ['spring', 'summer', 'autumn', 'winter', 'event', 'place', 'other'];
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -264,25 +296,26 @@ const MAX_SIDE = 2000;
 
 const ICON = {
   plus: '<path d="M12 5v14M5 12h14"/>',
-  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
-  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/>',
+  pause: '<path d="M8.5 5v14M15.5 5v14"/>',
+  spark: '<path d="M12 3c.6 4.3 2.7 6.4 7 7-4.3.6-6.4 2.7-7 7-.6-4.3-2.7-6.4-7-7 4.3-.6 6.4-2.7 7-7Z"/><path d="M19 15c.25 1.6 1 2.4 2.5 2.5-1.5.25-2.25 1-2.5 2.5-.25-1.5-1-2.25-2.5-2.5 1.5-.1 2.25-.9 2.5-2.5Z"/>',
   back: '<path d="M15 18l-6-6 6-6"/>',
-  next: '<path d="M9 18l6-6-6-6"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
-  play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
-  pause: '<path d="M8 5v14M16 5v14"/>',
   caption: '<path d="M4 7h16M4 12h10M4 17h7"/>',
-  star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
-  wide: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M8 12h8M8 12l2-2M8 12l2 2M16 12l-2-2M16 12l-2 2"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
   left: '<path d="M14 7l-5 5 5 5"/>',
   right: '<path d="M10 7l5 5-5 5"/>',
-  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l.8 12.5h9.4L17.5 7"/>',
   full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  masonry: '<rect x="4" y="4" width="7" height="9" rx="1.5"/><rect x="13" y="4" width="7" height="6" rx="1.5"/><rect x="4" y="15" width="7" height="5" rx="1.5"/><rect x="13" y="12" width="7" height="8" rx="1.5"/>',
+  grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+  dots: '<circle cx="5.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18.5" cy="12" r="1.3" fill="currentColor"/>',
 };
 function icon(name) {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
-  s.setAttribute('stroke-width', '1.8'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.setAttribute('stroke-width', '1.7'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
   s.setAttribute('aria-hidden', 'true');
   s.innerHTML = ICON[name]; // static markup from this file only
   return s;
@@ -316,19 +349,19 @@ function setBanner(msg) { $('#banner').textContent = msg || ''; }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const safeHex = (c) => (typeof c === 'string' && HEX.test(c) ? c : '#888888');
 const str = (v, max = 4000) => (typeof v === 'string' ? v.slice(0, max) : '');
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 
 /* ---------- State ---------- */
-let boards = {};            // id -> board
-let store = null;           // backend
-let assets = null;          // assets namespace or null
-let sample = null;          // sample fn or null
+let boards = {};
+let store = null;
+let assets = null;
+let sample = null;
 let loaded = false;
 let filter = 'all';
-let editingCaption = null;  // photo id
-let confirmDelete = null;   // photo id
-let confirmBoard = false;
+let editingCaption = null;
+let confirmDelete = null;
 let reflecting = false;
-const pendingUploads = {};  // boardId -> count
+const pendingUploads = {};
 
 function normalize(b) {
   b = (b && typeof b === 'object') ? b : {};
@@ -356,7 +389,7 @@ function normalize(b) {
   };
 }
 
-/* ---------- Colors ---------- */
+/* ---------- Colours ---------- */
 const hexOf = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 const dist = (a, b) => Math.hypot(a[0] - b[0], (a[1] - b[1]) * 1.2, a[2] - b[2]);
@@ -385,25 +418,20 @@ function extractColors(ctx, w, hgt) {
   }
   return picked.map((c) => hexOf(...c));
 }
-
 function boardPalette(photos) {
   const pool = [];
   for (const p of photos) p.colors.forEach((hex, i) => {
     const c = rgbOf(hex), w = 5 - i + (p.feat ? 2 : 0);
     const near = pool.find((q) => dist(q.c, c) < 40);
-    if (near) {
-      const t = near.w + w;
-      near.c = near.c.map((v, k) => (v * near.w + c[k] * w) / t); near.w = t;
-    } else pool.push({ c, w });
+    if (near) { const t = near.w + w; near.c = near.c.map((v, k) => (v * near.w + c[k] * w) / t); near.w = t; }
+    else pool.push({ c, w });
   });
   return pool.sort((a, b) => b.w - a.w).slice(0, 6).sort((a, b) => lum(b.c) - lum(a.c)).map((e) => hexOf(...e.c));
 }
 function tints(b) {
   const p = b.palette.length ? b.palette : [KINDS[b.kind].color];
-  const pick = (i) => safeHex(p[Math.min(p.length - 1, Math.floor(i * (p.length - 1)))]);
-  // Prefer the more saturated tones for the header wash.
   const vivid = [...p].sort((a, c) => sat(rgbOf(c)) - sat(rgbOf(a)));
-  return { '--c1': safeHex(vivid[0] || pick(0)), '--c2': safeHex(vivid[1] || pick(.5)), '--c3': safeHex(vivid[2] || pick(1)), '--kc': KINDS[b.kind].color };
+  return { '--c1': safeHex(vivid[0]), '--c2': safeHex(vivid[1] || vivid[0]), '--c3': safeHex(vivid[2] || vivid[0]), '--kc': KINDS[b.kind].color };
 }
 
 /* ---------- Images ---------- */
@@ -411,9 +439,8 @@ async function decode(file) {
   try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
   catch (_) {
     const url = URL.createObjectURL(file);
-    try {
-      const img = new Image(); img.src = url; await img.decode(); return img;
-    } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    try { const img = new Image(); img.src = url; await img.decode(); return img; }
+    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
   }
 }
 function canvasBlob(canvas, type, q) { return new Promise((res) => canvas.toBlob(res, type, q)); }
@@ -424,7 +451,7 @@ async function prepare(file) {
   const s = Math.min(1, MAX_SIDE / Math.max(w0, h0));
   const w = Math.round(w0 * s), hh = Math.round(h0 * s);
   const c = document.createElement('canvas'); c.width = w; c.height = hh;
-  const ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0, w, hh);
+  c.getContext('2d').drawImage(src, 0, 0, w, hh);
   const blob = await canvasBlob(c, 'image/jpeg', 0.86);
   const sw = 72, sh = Math.max(1, Math.round(72 * hh / w));
   const sc = document.createElement('canvas'); sc.width = sw; sc.height = sh;
@@ -519,12 +546,12 @@ function localBackend() {
     async blob(id) { const b = await tx('readonly', (s) => s.get(id)); if (!b) throw new Error('missing'); return b; },
   };
 }
-
 function setImg(img, id) {
   const u = store.url(id);
   if (typeof u === 'string') img.src = u;
   else u.then((x) => { if (x) img.src = x; });
 }
+function photoImg(p, props) { const img = h('img', Object.assign({ alt: p.caption || '', loading: 'lazy', decoding: 'async' }, props || {})); setImg(img, p.id); return img; }
 
 /* ---------- Board operations ---------- */
 const saveTimers = {};
@@ -580,8 +607,8 @@ async function addFiles(id, files) {
       save(id);
     } catch (e) {
       failed++;
-      if (e && e.code === 'quota_or_state') { toast('Photo storage is full. Remove some photos and try again.'); }
-      else if (e && e.code === 'rate_limited') { toast('Adding photos too quickly. Wait a moment and add the rest.'); }
+      if (e && e.code === 'quota_or_state') toast('Photo storage is full. Remove some photos and try again.');
+      else if (e && e.code === 'rate_limited') toast('Adding photos too quickly. Wait a moment and add the rest.');
     } finally {
       pendingUploads[id]--;
       if (!isEditing()) render();
@@ -590,7 +617,6 @@ async function addFiles(id, files) {
   if (failed && failed === files.length) toast(failed === 1 ? 'That photo couldn’t be read. Try a JPEG or PNG.' : 'Those photos couldn’t be read. Try JPEG or PNG files.');
   else if (failed) toast(failed + ' of ' + files.length + ' photos couldn’t be read and were skipped.');
 }
-
 function removePhoto(id, pid) {
   const b = boards[id]; if (!b) return;
   b.photos = b.photos.filter((p) => p.id !== pid);
@@ -607,7 +633,6 @@ function deleteBoard(id) {
   delete boards[id];
   store.remove(id);
   ids.forEach((pid) => store.drop(pid));
-  confirmBoard = false;
   location.hash = '';
   toast('Board deleted.');
 }
@@ -621,13 +646,14 @@ async function reflect(id) {
     const max = lim && lim.images ? Math.min(lim.images.maxCount, 6) : 0;
     const chosen = [];
     if (max && b.photos.length) {
-      const step = b.photos.length / Math.min(max, b.photos.length);
-      for (let i = 0; i < Math.min(max, b.photos.length); i++) chosen.push(b.photos[Math.floor(i * step)]);
+      const n = Math.min(max, b.photos.length), step = b.photos.length / n;
+      for (let i = 0; i < n; i++) chosen.push(b.photos[Math.floor(i * step)]);
     }
     const images = (await Promise.all(chosen.map((p) => store.blob(p.id).catch(() => null)))).filter(Boolean);
     const caps = b.photos.map((p) => p.caption).filter(Boolean).slice(0, 20);
+    const seasonal = KINDS[b.kind].season;
     const prompt = [
-      'You are looking at a personal moodboard someone made to collect the feeling of a ' + (KINDS[b.kind].season ? 'season' : 'moment') + '.',
+      'You are looking at a personal moodboard someone made to collect the feeling of a ' + (seasonal ? 'season' : 'moment') + '.',
       'Board name: ' + (b.name || '(untitled)'),
       'Type: ' + label(b),
       b.note ? 'What they wrote about it: ' + b.note : '',
@@ -635,7 +661,7 @@ async function reflect(id) {
       b.palette.length ? 'Colours drawn from the photos: ' + b.palette.join(', ') : '',
       images.length ? images.length + ' of the ' + b.photos.length + ' photos are attached.' : 'No photos are attached; work from the text and colours.',
       '',
-      'Write a short contemplation of this board: 60 to 100 words, in calm, concrete language. Notice what the images share: light, texture, colour, places, objects, pace. Speak to the person gently in the second person, and end with one quiet question or intention they could carry through this ' + (KINDS[b.kind].season ? 'season' : 'time') + '. No clichés, no exclamation marks, no lists.',
+      'Write a short contemplation of this board: 60 to 100 words, in calm, concrete language. Notice what the images share: light, texture, colour, places, objects, pace. Speak to the person gently in the second person, and end with one quiet question or intention they could carry through this ' + (seasonal ? 'season' : 'time') + '. No clichés, no exclamation marks, no lists.',
       'Also give 3 to 5 single mood words, and a suggested board title of 2 to 5 words.',
       'Reply with JSON only: {"reflection": string, "words": string[], "title": string}',
     ].filter(Boolean).join('\n');
@@ -667,147 +693,140 @@ function route() {
 function render() {
   if (!loaded) return;
   const r = route();
-  const app = $('#app');
+  const onBoard = r.view === 'board' && boards[r.id];
   const scroll = window.scrollY;
-  app.replaceChildren(r.view === 'board' && boards[r.id] ? renderBoard(r.id) : renderHome());
-  if (r.view === 'board' && boards[r.id]) { layoutWall(); window.scrollTo(0, scroll); }
-  const nt = $('#newTop'); nt.replaceChildren(icon('plus'), h('span', {}, 'New board'));
+  $('#app').replaceChildren(onBoard ? renderBoard(r.id) : renderHome());
+  document.querySelector('.dock')?.remove();
+  if (onBoard) { document.body.append(renderDock(r.id)); layoutWall(); window.scrollTo(0, scroll); }
+  $('#newTop').replaceChildren(icon('plus'), h('span', {}, 'New board'));
 }
 
 function renderHome() {
   const list = Object.entries(boards).sort((a, b) => b[1].updated - a[1].updated);
-  const counts = {}; for (const [, b] of list) counts[b.kind] = (counts[b.kind] || 0) + 1;
-  const now = new Date(), cs = currentSeason(now);
-  const hasCurrent = list.some(([, b]) => b.kind === cs && b.year === now.getFullYear());
-  const shown = list.filter(([, b]) => filter === 'all' || (filter === 'seasons' ? KINDS[b.kind].season : b.kind === filter));
-
-  const intro = h('section', { class: 'wrap intro' },
-    h('div', {},
-      h('h1', {}, list.length ? 'Your boards' : 'Keep the feeling of a season'),
-      h('p', {}, list.length
-        ? list.length + (list.length === 1 ? ' board, ' : ' boards, ') + list.reduce((n, [, b]) => n + b.photos.length, 0) + ' photos. Open one to add pictures, or press Contemplate to sit with it.'
-        : 'Add photos and Mood Almanac lays them out as a board, pulls a colour palette from them, and gives you a quiet full-screen view to look at them slowly.')),
-    h('div', { class: 'actions' },
-      !hasCurrent && list.length ? h('button', { class: 'btn', type: 'button', style: { '--kc': KINDS[cs].color }, onclick: () => createBoard({ name: KINDS[cs].label + ' ' + now.getFullYear(), kind: cs, year: now.getFullYear() }) },
-        h('i', { class: 'dot' }), 'Start ' + KINDS[cs].label + ' ' + now.getFullYear()) : null,
-    ));
+  const now = new Date(), cs = currentSeason(now), yr = now.getFullYear();
 
   if (!list.length) {
-    return h('div', {}, intro, h('section', { class: 'wrap emptyhome' },
-      h('div', { class: 'meta' }, h('span', { class: 'k' }, 'Start with one')),
-      h('div', { class: 'seasonpick' }, KIND_ORDER.filter((k) => k !== 'other').map((k) => {
-        const yr = now.getFullYear();
-        return h('button', { type: 'button', style: { '--kc': KINDS[k].color }, onclick: () => KINDS[k].season ? createBoard({ name: KINDS[k].label + ' ' + yr, kind: k, year: yr }) : openNew(k) },
-          h('div', { class: 'sw' }), h('b', {}, KINDS[k].label), h('small', {}, KINDS[k].hint));
-      }))));
+    return h('div', { class: 'wrap' },
+      h('section', { class: 'mast' },
+        h('div', { class: 'eyebrow' }, KINDS[cs].label + ' ' + yr),
+        h('h1', {}, 'Collect the feeling of a ', h('em', {}, 'season.')),
+        h('p', {}, 'Add photos and they become a board, with a colour palette taken from them and a quiet full-screen view for looking at them slowly.')),
+      h('div', { class: 'seasons' }, KIND_ORDER.filter((k) => k !== 'other').map((k) =>
+        h('button', { class: 'season', type: 'button', style: { '--kc': KINDS[k].color }, onclick: () => KINDS[k].season ? createBoard({ name: KINDS[k].label + ' ' + yr, kind: k, year: yr }) : openSheet({ kind: k }) },
+          h('b', {}, KINDS[k].label), h('small', {}, KINDS[k].hint)))));
   }
 
-  const chipBtn = (key, text, n, color) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(filter === key), style: color ? { '--kc': color } : null, onclick: () => { filter = key; try { sessionStorage.setItem('mood-almanac.filter', key); } catch (_) {} render(); } },
-    color ? h('i', { class: 'dot' }) : null, text, h('span', { class: 'n' }, n));
+  const counts = {}; for (const [, b] of list) counts[b.kind] = (counts[b.kind] || 0) + 1;
+  const total = list.reduce((n, [, b]) => n + b.photos.length, 0);
+  const shown = list.filter(([, b]) => filter === 'all' || (filter === 'seasons' ? KINDS[b.kind].season : b.kind === filter));
+  const tab = (key, text, n, color) => h('button', { class: 'tab', type: 'button', 'aria-pressed': String(filter === key), style: color ? { '--kc': color } : null,
+    onclick: () => { filter = key; try { sessionStorage.setItem('mood-almanac.filter', key); } catch (_) {} render(); } },
+    color ? h('i', { class: 'dot' }) : null, text, h('sup', {}, n));
   const seasonsN = list.filter(([, b]) => KINDS[b.kind].season).length;
-  const filters = h('div', { class: 'wrap filters', role: 'group', 'aria-label': 'Filter boards' },
-    chipBtn('all', 'All', list.length),
-    seasonsN ? chipBtn('seasons', 'Seasons', seasonsN) : null,
-    KIND_ORDER.filter((k) => counts[k]).map((k) => chipBtn(k, KINDS[k].label, counts[k], KINDS[k].color)));
+  const hasCurrent = list.some(([, b]) => b.kind === cs && b.year === yr);
 
-  const grid = h('section', { class: 'wrap boards' }, shown.map(([id, b]) => {
-    const ph = coverList(b);
-    const col = ph.length
-      ? h('div', { class: 'collage n' + ph.length }, ph.map((p) => { const img = h('img', { alt: p.caption || '', loading: 'lazy' }); setImg(img, p.id); return img; }))
-      : h('div', { class: 'collage empty', style: { '--kc': KINDS[b.kind].color } }, 'No photos yet');
-    return h('a', { class: 'card', href: '#board-' + id },
-      col,
-      b.palette.length ? h('div', { class: 'stripe', 'aria-hidden': 'true' }, b.palette.map((c) => h('i', { style: { background: safeHex(c) } }))) : null,
-      h('h3', {}, b.name || 'Untitled board'),
-      h('div', { class: 'meta' },
-        h('span', { class: 'k', style: { '--kc': KINDS[b.kind].color } }, h('i', { class: 'dot' }), label(b)),
-        h('span', { class: 'n' }, b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos'))));
-  }));
-  if (!shown.length) grid.append(h('p', { class: 'meta' }, 'No boards of this kind yet.'));
-  return h('div', {}, intro, filters, grid);
+  return h('div', { class: 'wrap' },
+    h('section', { class: 'mast' },
+      h('div', { class: 'eyebrow' }, plural(list.length, 'board', 'boards'), h('span', {}, plural(total, 'photo', 'photos'))),
+      h('h1', {}, 'Your ', h('em', {}, 'almanac'))),
+    h('div', { class: 'tabs', role: 'group', 'aria-label': 'Filter boards' },
+      tab('all', 'All', list.length),
+      seasonsN ? tab('seasons', 'Seasons', seasonsN) : null,
+      KIND_ORDER.filter((k) => counts[k]).map((k) => tab(k, KINDS[k].label, counts[k], KINDS[k].color))),
+    h('section', { class: 'boards' },
+      shown.map(([id, b]) => {
+        const ph = coverList(b);
+        const cover = ph.length
+          ? h('div', { class: 'cover' }, photoImg(ph[0]),
+              ph.length > 1 ? h('div', { class: 'thumbs' }, ph.slice(1, 4).map((p) => photoImg(p))) : null,
+              b.palette.length ? h('div', { class: 'chips', 'aria-hidden': 'true' }, b.palette.slice(0, 5).map((c) => h('i', { style: { background: safeHex(c) } }))) : null)
+          : h('div', { class: 'cover empty', style: { '--kc': KINDS[b.kind].color } }, h('span', {}, 'No photos yet'));
+        return h('a', { class: 'card', href: '#board-' + id }, cover,
+          h('h3', {}, b.name || 'Untitled'),
+          h('div', { class: 'eyebrow' }, h('span', { style: { '--kc': KINDS[b.kind].color }, class: 'dot' }), label(b), h('span', {}, '· ' + b.photos.length)));
+      }),
+      h('button', { class: 'newcard', type: 'button', onclick: () => hasCurrent ? openSheet({}) : createBoard({ name: KINDS[cs].label + ' ' + yr, kind: cs, year: yr }) },
+        h('span', { class: 'plus' }, icon('plus')),
+        h('b', {}, hasCurrent ? 'New board' : KINDS[cs].label + ' ' + yr),
+        hasCurrent ? 'A season, event or place' : 'Start this season’s board')));
 }
 
 function renderBoard(id) {
   const b = boards[id];
-  const K = KINDS[b.kind];
   const canAdd = store.kind === 'local' || !!assets;
   const pend = pendingUploads[id] || 0;
 
-  const kindSel = h('select', { class: 'sel', id: 'kind', 'aria-label': 'Board type', onchange: (e) => { b.kind = e.target.value; if (KINDS[b.kind].season && !b.year) b.year = new Date().getFullYear(); save(id); render(); } },
-    KIND_ORDER.map((k) => h('option', { value: k, selected: k === b.kind }, KINDS[k].label)));
-  const yearIn = h('input', { class: 'yearin', id: 'year', type: 'number', inputmode: 'numeric', min: '1900', max: '2200', placeholder: 'Year', value: b.year ? String(b.year) : '', 'aria-label': 'Year',
-    oninput: (e) => { const v = parseInt(e.target.value, 10); b.year = v >= 1900 && v <= 2200 ? v : null; save(id, { soon: true }); } });
-  const dateIn = b.kind === 'event' ? h('input', { class: 'datein', id: 'date', type: 'date', value: b.date, 'aria-label': 'Event date',
-    onchange: (e) => { b.date = e.target.value || ''; if (b.date) b.year = +b.date.slice(0, 4); save(id); } }) : null;
-
-  const head = h('header', { class: 'bhead', style: tints(b) }, h('div', { class: 'wrap' },
+  const head = h('header', { class: 'wrap bhead' },
     h('a', { class: 'back', href: '#' }, icon('back'), 'All boards'),
-    h('input', { class: 'titlein', id: 'title', value: b.name, placeholder: 'Name this board', 'aria-label': 'Board name', maxlength: '200',
-      oninput: (e) => { b.name = e.target.value; save(id, { soon: true }); } }),
-    h('div', { class: 'fields' }, kindSel, b.kind !== 'event' ? yearIn : null, dateIn),
-    h('textarea', { class: 'notein', id: 'note', rows: '2', placeholder: 'What is this board about? A feeling, a plan, a place you want to be…', 'aria-label': 'Notes', maxlength: '4000',
+    h('div', { class: 'eyebrow' },
+      h('span', { class: 'dot', style: { '--kc': KINDS[b.kind].color } }), label(b),
+      h('span', {}, plural(b.photos.length, 'photo', 'photos')),
+      h('button', { type: 'button', onclick: () => openSheet({ id }) }, 'Edit details')),
+    h('textarea', { class: 'titlein', id: 'title', rows: '1', placeholder: 'Name this board', 'aria-label': 'Board name', maxlength: '200',
+      oninput: (e) => { b.name = e.target.value.replace(/\n/g, ' '); save(id, { soon: true }); },
+      onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } } }, b.name),
+    h('textarea', { class: 'notein', id: 'note', rows: '1', placeholder: 'Write a line about what this board means to you…', 'aria-label': 'Notes', maxlength: '4000',
       oninput: (e) => { b.note = e.target.value; save(id, { soon: true }); } }, b.note),
-    b.palette.length ? h('div', { class: 'palette', 'aria-label': 'Palette from your photos' }, b.palette.map((c) => h('button', { class: 'swatch', type: 'button', title: 'Copy ' + c,
-      onclick: () => { navigator.clipboard?.writeText(c).then(() => toast('Copied ' + c), () => toast(c)) ?? toast(c); } }, h('i', { style: { background: safeHex(c) } }), c.toUpperCase()))) : null,
-    h('div', { class: 'toolbar' },
-      canAdd ? h('button', { class: 'btn primary', type: 'button', onclick: () => pick(id) }, icon('plus'), 'Add photos') : null,
-      h('button', { class: 'btn', type: 'button', disabled: !b.photos.length, onclick: () => openStage(id, -1) }, icon('eye'), 'Contemplate'),
-      sample ? h('button', { class: 'btn', type: 'button', disabled: reflecting || (!b.photos.length && !b.note), onclick: () => reflect(id) }, icon('spark'), reflecting ? 'Claude is looking…' : b.reflection ? 'Reflect again' : 'Reflect with Claude') : null,
-      h('span', { class: 'spacer' }),
-      b.photos.length ? h('div', { class: 'seg', role: 'group', 'aria-label': 'Layout' },
-        h('button', { type: 'button', 'aria-pressed': String(b.layout === 'collage'), onclick: () => { b.layout = 'collage'; save(id); render(); } }, 'Collage'),
-        h('button', { type: 'button', 'aria-pressed': String(b.layout === 'grid'), onclick: () => { b.layout = 'grid'; save(id); render(); } }, 'Grid')) : null),
-  ));
+    b.palette.length ? h('div', { class: 'palette', 'aria-label': 'Palette from your photos' }, b.palette.map((c) =>
+      h('button', { class: 'chip', type: 'button', title: 'Copy ' + c.toUpperCase(),
+        onclick: () => { const t = c.toUpperCase(); if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => toast('Copied ' + t), () => toast(t)); else toast(t); } },
+        h('i', { style: { background: safeHex(c) } }), h('span', {}, c.toUpperCase())))) : null);
 
-  const body = h('div', { class: 'wrap' });
+  const body = h('div', { class: 'wrap bbody' });
   if (b.reflection && b.reflection.text) {
     const r = b.reflection;
     body.append(h('section', { class: 'reflect' },
-      h('div', { class: 'lab' }, 'A reflection from Claude'),
+      h('div', { class: 'eyebrow' }, icon('spark'), 'Claude’s reflection'),
       h('p', {}, r.text),
       r.words.length ? h('div', { class: 'words' }, r.words.map((w) => h('span', {}, w))) : null,
-      r.title && r.title !== b.name ? h('div', { class: 'row' }, 'Suggested title: ', h('b', {}, r.title),
-        h('button', { class: 'btn ghost', type: 'button', onclick: () => { b.name = r.title; save(id); render(); } }, 'Use it')) : null));
+      r.title && r.title !== b.name ? h('div', { class: 'sugg' }, 'Suggested title', h('b', {}, r.title),
+        h('button', { class: 'btn', type: 'button', onclick: () => { b.name = r.title; save(id); render(); } }, 'Use it')) : null));
   }
-
   if (!b.photos.length && !pend) {
     body.append(h('section', { class: 'drop' },
-      h('b', {}, canAdd ? 'Add the first photos' : 'No photos yet'),
-      h('span', {}, canAdd ? 'Choose photos, drag them here, or paste an image. Colours are picked from them as you go.' : 'Only people who can edit this app can add photos.'),
-      canAdd ? h('button', { class: 'btn primary', type: 'button', onclick: () => pick(id) }, icon('plus'), 'Choose photos') : null));
+      h('b', {}, canAdd ? 'Start with a few photos' : 'No photos yet'),
+      h('span', {}, canAdd ? 'Choose photos, drag them here or paste an image. The palette builds itself as you add them.' : 'Only people who can edit this app can add photos.'),
+      canAdd ? h('button', { class: 'btn dark', type: 'button', onclick: () => pick(id) }, icon('plus'), 'Choose photos') : null));
   } else {
     const wall = h('section', { class: 'wall' + (b.layout === 'grid' ? ' grid' : ''), id: 'wall', 'aria-label': 'Photos' });
     b.photos.forEach((p, i) => wall.append(renderTile(id, b, p, i)));
-    for (let i = 0; i < pend; i++) wall.append(h('figure', { class: 'tile pending' }, h('div', { class: 'ph' }, 'Adding…')));
+    for (let i = 0; i < pend; i++) wall.append(h('figure', { class: 'tile pending' }, h('div', { class: 'ph' })));
     body.append(wall);
   }
+  return h('div', { class: 'board', style: tints(b) }, h('div', { class: 'aura', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), head, body);
+}
 
-  body.append(h('div', { class: 'danger-zone' }, confirmBoard
-    ? [h('span', {}, 'Delete this board' + (b.photos.length ? ' and its ' + b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos') : '') + '? This can’t be undone.'),
-       h('button', { class: 'btn solid-danger', type: 'button', onclick: () => deleteBoard(id) }, 'Delete board'),
-       h('button', { class: 'btn', type: 'button', onclick: () => { confirmBoard = false; render(); } }, 'Keep it')]
-    : [h('span', {}, 'Created ' + new Date(b.created).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })),
-       h('button', { class: 'btn ghost danger', type: 'button', onclick: () => { confirmBoard = true; render(); } }, icon('trash'), 'Delete board')]));
-
-  return h('div', {}, head, h('div', { class: 'bbody' }, body));
+function renderDock(id) {
+  const b = boards[id];
+  const canAdd = store.kind === 'local' || !!assets;
+  const lbl = (t) => h('span', { class: 'lbl' }, t);
+  const setLayout = (l) => { b.layout = l; save(id); render(); };
+  return h('nav', { class: 'dock', 'aria-label': 'Board actions' },
+    canAdd ? h('button', { class: 'btn dark', type: 'button', onclick: () => pick(id), title: 'Add photos' }, icon('plus'), lbl('Add photos')) : null,
+    h('button', { class: 'btn', type: 'button', disabled: !b.photos.length, onclick: () => openStage(id, -1), title: 'Contemplate' }, icon('play'), lbl('Contemplate')),
+    sample ? h('button', { class: 'btn' + (reflecting ? ' spin' : ''), type: 'button', disabled: reflecting || (!b.photos.length && !b.note), onclick: () => reflect(id), title: 'Reflect with Claude' },
+      icon('spark'), lbl(reflecting ? 'Looking…' : 'Reflect')) : null,
+    b.photos.length ? h('span', { class: 'sep' }) : null,
+    b.photos.length ? h('button', { class: 'btn round' + (b.layout === 'collage' ? ' on' : ''), type: 'button', 'aria-pressed': String(b.layout === 'collage'), title: 'Collage', 'aria-label': 'Collage layout', onclick: () => setLayout('collage') }, icon('masonry')) : null,
+    b.photos.length ? h('button', { class: 'btn round' + (b.layout === 'grid' ? ' on' : ''), type: 'button', 'aria-pressed': String(b.layout === 'grid'), title: 'Grid', 'aria-label': 'Grid layout', onclick: () => setLayout('grid') }, icon('grid')) : null,
+    h('button', { class: 'btn round', type: 'button', title: 'Edit details', 'aria-label': 'Edit details', onclick: () => openSheet({ id }) }, icon('dots')));
 }
 
 function renderTile(id, b, p, i) {
-  const img = h('img', { alt: p.caption || 'Photo ' + (i + 1), loading: 'lazy', decoding: 'async', style: b.layout === 'collage' ? { 'aspect-ratio': p.w + ' / ' + p.h } : null });
-  setImg(img, p.id);
+  const img = photoImg(p, { alt: p.caption || 'Photo ' + (i + 1), style: b.layout === 'collage' ? { 'aspect-ratio': p.w + ' / ' + p.h } : null });
   const ph = h('button', { class: 'ph', type: 'button', 'aria-label': 'View ' + (p.caption || 'photo ' + (i + 1)), onclick: () => openStage(id, i) }, img);
-  const act = (name, title, fn, on) => h('button', { class: 'iconbtn' + (on ? ' on' : ''), type: 'button', title, 'aria-label': title, onclick: fn }, icon(name));
+  const act = (name, title, fn, on) => h('button', { class: on ? 'on' : null, type: 'button', title, 'aria-label': title, onclick: fn }, icon(name));
   const move = (d) => { const j = i + d; if (j < 0 || j >= b.photos.length) return; [b.photos[i], b.photos[j]] = [b.photos[j], b.photos[i]]; save(id); render(); };
-  const fig = h('figure', { class: 'tile' + (p.feat && b.layout === 'collage' ? ' feat' : ''), 'data-id': p.id },
+  const fig = h('figure', { class: 'tile' + (p.feat && b.layout === 'collage' ? ' feat' : '') },
     ph,
+    b.cover === p.id ? h('span', { class: 'badge' }, 'Cover') : null,
     h('div', { class: 'acts' },
       act('caption', 'Write a caption', () => { editingCaption = p.id; render(); setTimeout(() => $('#cap-' + p.id)?.focus(), 0); }),
-      act('star', b.cover === p.id ? 'This is the cover' : 'Use as cover', () => { b.cover = p.id; save(id); render(); toast('Cover photo set.'); }, b.cover === p.id),
-      b.layout === 'collage' ? act('wide', p.feat ? 'Show smaller' : 'Show larger', () => { p.feat = !p.feat; b.palette = boardPalette(b.photos); save(id); render(); }, p.feat) : null,
+      b.cover !== p.id ? act('star', 'Use as cover', () => { b.cover = p.id; save(id); render(); toast('Cover photo set.'); }) : null,
+      b.layout === 'collage' ? act('expand', p.feat ? 'Show smaller' : 'Show larger', () => { p.feat = !p.feat; b.palette = boardPalette(b.photos); save(id); render(); }, p.feat) : null,
       i > 0 ? act('left', 'Move earlier', () => move(-1)) : null,
       i < b.photos.length - 1 ? act('right', 'Move later', () => move(1)) : null,
-      act('trash', 'Remove photo', () => { confirmDelete = p.id; render(); })),
-  );
+      act('trash', 'Remove photo', () => { confirmDelete = p.id; render(); })));
   if (editingCaption === p.id) {
     fig.append(h('input', { class: 'capin', id: 'cap-' + p.id, value: p.caption, placeholder: 'Caption', maxlength: '500', 'aria-label': 'Caption',
       oninput: (e) => { p.caption = e.target.value; save(id, { soon: true }); },
@@ -815,8 +834,8 @@ function renderTile(id, b, p, i) {
       onblur: () => { editingCaption = null; save(id); render(); } }));
   } else if (p.caption) fig.append(h('figcaption', {}, p.caption));
   if (confirmDelete === p.id) {
-    fig.append(h('div', { class: 'confirm' }, 'Remove this photo from the board?',
-      h('div', {}, h('button', { class: 'btn solid-danger', type: 'button', onclick: () => removePhoto(id, p.id) }, 'Remove'),
+    fig.append(h('div', { class: 'confirm' }, 'Remove this photo?',
+      h('div', {}, h('button', { class: 'btn red', type: 'button', onclick: () => removePhoto(id, p.id) }, 'Remove'),
         h('button', { class: 'btn', type: 'button', onclick: () => { confirmDelete = null; render(); } }, 'Cancel'))));
   }
   return fig;
@@ -827,8 +846,10 @@ let wallRO;
 function layoutWall() {
   const wall = $('#wall'); if (!wall) return;
   const fit = () => {
-    if (wall.classList.contains('grid')) { wall.querySelectorAll('.tile').forEach((t) => t.style.gridRowEnd = ''); return; }
-    wall.querySelectorAll('.tile').forEach((t) => { t.style.gridRowEnd = 'span ' + Math.ceil((t.getBoundingClientRect().height + 14) / 4); });
+    const grid = wall.classList.contains('grid');
+    const first = wall.querySelector('.tile');
+    const gap = first ? parseFloat(getComputedStyle(first).marginBottom) || 0 : 0;
+    wall.querySelectorAll('.tile').forEach((t) => { t.style.gridRowEnd = grid ? '' : 'span ' + Math.ceil((t.getBoundingClientRect().height + gap) / 4); });
   };
   fit();
   wallRO?.disconnect();
@@ -837,41 +858,66 @@ function layoutWall() {
   wall.querySelectorAll('.tile').forEach((t) => wallRO.observe(t));
 }
 
-/* ---------- New board modal ---------- */
-function openNew(kind) {
+/* ---------- Sheet: new board or edit details ---------- */
+function openSheet({ id, kind }) {
+  const editing = !!(id && boards[id]);
+  const b = editing ? boards[id] : null;
   const now = new Date();
-  let k = kind || currentSeason(now);
-  const close = () => { scrim.remove(); document.removeEventListener('keydown', onKey); };
+  let k = b ? b.kind : (kind || currentSeason(now));
+  let confirming = false;
+  const dismiss = () => { scrim.remove(); document.removeEventListener('keydown', onKey); };
+  const close = () => { dismiss(); if (editing) render(); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
-  const nameIn = h('input', { type: 'text', id: 'nb-name', maxlength: '200', autocomplete: 'off' });
-  const yearIn = h('input', { type: 'number', id: 'nb-year', value: String(now.getFullYear()), min: '1900', max: '2200' });
-  const dateIn = h('input', { type: 'date', id: 'nb-date' });
-  const yearLab = h('label', {}, 'Year', yearIn);
-  const dateLab = h('label', {}, 'Date (optional)', dateIn);
+  const nameIn = h('input', { type: 'text', id: 'sh-name', maxlength: '200', autocomplete: 'off', value: b ? b.name : '' });
+  const yearIn = h('input', { type: 'number', id: 'sh-year', inputmode: 'numeric', min: '1900', max: '2200', value: String(b ? (b.year || '') : now.getFullYear()) });
+  const dateIn = h('input', { type: 'date', id: 'sh-date', value: b ? b.date : '' });
+  const yearField = h('label', { class: 'field' }, h('span', {}, 'Year'), yearIn);
+  const dateField = h('label', { class: 'field' }, h('span', {}, 'Date'), dateIn);
   const kinds = h('div', { class: 'kinds', role: 'group', 'aria-label': 'Type' });
-  const sync = () => {
-    kinds.replaceChildren(...KIND_ORDER.map((key) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(key === k), style: { '--kc': KINDS[key].color }, onclick: () => { k = key; sync(); } }, h('i', { class: 'dot' }), KINDS[key].label)));
-    nameIn.placeholder = KINDS[k].season ? KINDS[k].label + ' ' + (yearIn.value || now.getFullYear()) : k === 'event' ? 'e.g. Maya’s wedding' : k === 'place' ? 'e.g. Lisbon in May' : 'e.g. New flat';
-    dateLab.hidden = k !== 'event';
+  const danger = h('div', { class: 'danger' });
+  const year = () => { const y = parseInt(yearIn.value, 10); return y >= 1900 && y <= 2200 ? y : null; };
+  const apply = () => {
+    if (!b) return;
+    b.name = nameIn.value; b.kind = k;
+    b.date = k === 'event' ? dateIn.value : '';
+    b.year = b.date ? +b.date.slice(0, 4) : year();
+    save(id, { soon: true });
   };
-  yearIn.addEventListener('input', sync);
-  const form = h('form', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'nb-h', onsubmit: (e) => {
+  const sync = () => {
+    kinds.replaceChildren(...KIND_ORDER.map((key) => h('button', { class: 'kind', type: 'button', 'aria-pressed': String(key === k), style: { '--kc': KINDS[key].color },
+      onclick: () => { k = key; sync(); apply(); } }, h('i', { class: 'dot' }), KINDS[key].label)));
+    nameIn.placeholder = KINDS[k].season ? KINDS[k].label + ' ' + (yearIn.value || now.getFullYear()) : k === 'event' ? 'Maya’s wedding' : k === 'place' ? 'Lisbon in May' : 'New flat';
+    dateField.hidden = k !== 'event';
+    yearField.hidden = k === 'event';
+    if (editing) {
+      danger.replaceChildren(...(confirming
+        ? [h('span', {}, 'Delete this board' + (b.photos.length ? ' and ' + plural(b.photos.length, 'photo', 'photos') : '') + '? This can’t be undone.'),
+           h('button', { class: 'btn red', type: 'button', onclick: () => { dismiss(); deleteBoard(id); } }, 'Delete'),
+           h('button', { class: 'btn', type: 'button', onclick: () => { confirming = false; sync(); } }, 'Keep')]
+        : [h('button', { class: 'btn redtext ghost', type: 'button', onclick: () => { confirming = true; sync(); } }, icon('trash'), 'Delete board')]));
+    }
+  };
+  [nameIn, yearIn, dateIn].forEach((el) => el.addEventListener('input', () => { if (el === yearIn) sync(); apply(); }));
+  const form = h('form', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'sh-h', onsubmit: (e) => {
     e.preventDefault();
-    const y = parseInt(yearIn.value, 10);
+    if (editing) { apply(); close(); return; }
     const date = k === 'event' ? dateIn.value : '';
-    close();
-    createBoard({ name: nameIn.value.trim() || (KINDS[k].season ? nameIn.placeholder : ''), kind: k, year: date ? +date.slice(0, 4) : (y >= 1900 && y <= 2200 ? y : null), date });
+    dismiss();
+    createBoard({ name: nameIn.value.trim() || (KINDS[k].season ? nameIn.placeholder : ''), kind: k, year: date ? +date.slice(0, 4) : year(), date });
   } },
-    h('h2', { id: 'nb-h' }, 'New board'),
-    h('label', {}, 'Type', kinds),
-    h('label', {}, 'Name', nameIn),
-    h('div', { class: 'row2' }, yearLab, dateLab),
-    h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', onclick: close }, 'Cancel'), h('button', { class: 'btn primary', type: 'submit' }, 'Create board')));
+    h('h2', { id: 'sh-h' }, editing ? 'Details' : 'New board'),
+    h('div', { class: 'field' }, h('span', {}, 'Type'), kinds),
+    h('label', { class: 'field' }, h('span', {}, 'Name'), nameIn),
+    h('div', { class: 'row2' }, yearField, dateField),
+    h('div', { class: 'foot' },
+      editing ? null : h('button', { class: 'btn ghost', type: 'button', onclick: close }, 'Cancel'),
+      h('button', { class: 'btn dark', type: 'submit' }, editing ? 'Done' : 'Create board')),
+    editing ? danger : null);
   const scrim = h('div', { class: 'scrim', onclick: (e) => { if (e.target === scrim) close(); } }, form);
   sync();
   document.body.append(scrim);
   document.addEventListener('keydown', onKey);
-  setTimeout(() => nameIn.focus(), 0);
+  if (!editing) setTimeout(() => nameIn.focus(), 0);
 }
 
 /* ---------- Photo picking, drag & drop, paste ---------- */
@@ -906,7 +952,7 @@ function openStage(id, start) {
   const r = b.reflection;
   const opening = h('div', { class: 'opening' },
     h('div', { class: 'k' }, label(b)),
-    h('h2', {}, b.name || 'Untitled board'),
+    h('h2', {}, b.name || 'Untitled'),
     b.palette.length ? h('div', { class: 'bands' }, b.palette.map((c) => h('i', { style: { background: safeHex(c) } }))) : null,
     r && r.text ? h('p', {}, r.text) : b.note ? h('p', {}, b.note) : null);
   const glow = h('div', { class: 'glow' });
@@ -914,7 +960,7 @@ function openStage(id, start) {
   const count = h('div', { class: 'count' });
   const dots = h('div', { class: 'dots', 'aria-hidden': 'true' });
   const bar = h('div', { class: 'bar' });
-  const playBtn = h('button', { class: 'iconbtn', type: 'button' });
+  const playBtn = h('button', { class: 'ib main', type: 'button' });
   const setPlayIcon = () => { playBtn.replaceChildren(icon(playing ? 'pause' : 'play')); playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playBtn.title = playing ? 'Pause (space)' : 'Play (space)'; };
   const go = (n) => { i = n; show(); };
   const next = () => go(i + 1 >= b.photos.length ? -1 : i + 1);
@@ -923,9 +969,8 @@ function openStage(id, start) {
     clearTimeout(timer);
     bar.classList.remove('run'); void bar.offsetWidth;
     if (!playing) return;
-    const ms = i === -1 ? Math.max(6000, DWELL) : DWELL;
-    bar.style.animationDuration = ms + 'ms'; bar.classList.add('run');
-    timer = setTimeout(next, ms);
+    bar.style.animationDuration = DWELL + 'ms'; bar.classList.add('run');
+    timer = setTimeout(next, DWELL);
   }
   function show() {
     const p = i >= 0 ? b.photos[i] : null;
@@ -936,7 +981,7 @@ function openStage(id, start) {
     if (!p) {
       layers.forEach((l) => l.classList.remove('on'));
       opening.classList.add('on');
-      cap.textContent = b.photos.length + (b.photos.length === 1 ? ' photo' : ' photos');
+      cap.textContent = plural(b.photos.length, 'photo', 'photos');
       count.textContent = '';
     } else {
       opening.classList.remove('on');
@@ -945,20 +990,19 @@ function openStage(id, start) {
       nextLayer.onload = reveal;
       nextLayer.alt = p.caption || '';
       const u = store.url(p.id);
-      const apply = (src) => { if (nextLayer.src && nextLayer.src.endsWith(src) && nextLayer.complete) reveal(); else nextLayer.src = src; };
-      if (typeof u === 'string') apply(u); else u.then(apply);
+      const applySrc = (src) => { if (nextLayer.src && nextLayer.src.endsWith(src) && nextLayer.complete) reveal(); else nextLayer.src = src; };
+      if (typeof u === 'string') applySrc(u); else u.then(applySrc);
       cap.textContent = p.caption || '';
-      count.textContent = (i + 1) + ' / ' + b.photos.length;
-      // Warm the next image.
+      count.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(b.photos.length).padStart(2, '0');
       const n = b.photos[i + 1]; if (n) { const pre = new Image(); setImg(pre, n.id); }
     }
     schedule();
   }
   playBtn.addEventListener('click', () => { playing = !playing; setPlayIcon(); schedule(); });
-  const btn = (name, label, fn) => h('button', { class: 'iconbtn', type: 'button', 'aria-label': label, title: label, onclick: fn }, icon(name));
+  const btn = (name, lab, fn) => h('button', { class: 'ib', type: 'button', 'aria-label': lab, title: lab, onclick: fn }, icon(name));
   const el = h('div', { class: 'stage', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Contemplate ' + (b.name || 'board') },
     glow,
-    h('header', {}, h('div', { class: 'sname' }, b.name || 'Untitled board'),
+    h('header', {}, h('div', { class: 'sname' }, b.name || 'Untitled'),
       document.fullscreenEnabled ? btn('full', 'Full screen', () => { (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()).catch(() => {}); }) : null,
       btn('close', 'Close (Esc)', closeStage)),
     h('div', { class: 'frame', onclick: (e) => { const x = e.clientX / window.innerWidth; x < 0.3 ? prev() : next(); } }, layers, opening),
@@ -979,7 +1023,7 @@ function openStage(id, start) {
   document.body.append(el);
   document.documentElement.style.overflow = 'hidden';
   show();
-  el.querySelector('.ctl .iconbtn:nth-child(2)').focus();
+  playBtn.focus();
 }
 function closeStage() {
   if (!stage) return;
@@ -988,8 +1032,8 @@ function closeStage() {
 }
 
 /* ---------- Boot ---------- */
-$('#newTop').addEventListener('click', () => openNew());
-window.addEventListener('hashchange', () => { closeStage(); confirmBoard = false; confirmDelete = null; editingCaption = null; render(); window.scrollTo(0, 0); });
+$('#newTop').addEventListener('click', () => openSheet({}));
+window.addEventListener('hashchange', () => { closeStage(); confirmDelete = null; editingCaption = null; render(); window.scrollTo(0, 0); });
 
 (async function boot() {
   try { const f = sessionStorage.getItem('mood-almanac.filter'); if (f) filter = f; } catch (_) {}
