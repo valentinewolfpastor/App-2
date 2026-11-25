@@ -81,6 +81,15 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 .scroller { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
 .scroller-inner { display: grid; place-items: center; min-width: 100%; min-height: 100%; width: max-content; padding: 12px; }
 #board { display: block; touch-action: none; }
+.shapebar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--sunken); }
+.shapebar .grp { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 6px 9px; display: inline-flex; gap: 5px; align-items: center; font-weight: 600; font-size: 12.5px; min-height: 38px; color: var(--ink); }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip svg { width: 18px; height: 18px; }
+.slider { display: grid; gap: 2px; font-size: 11.5px; font-weight: 600; color: var(--muted); flex: 1 1 130px; max-width: 210px; min-width: 0; }
+.slider span { display: flex; justify-content: space-between; gap: 6px; }
+.slider b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.shapehint { flex: 1 1 100%; font-size: 12px; color: var(--muted); margin: 0; }
 .stagebar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .stagebar b { color: var(--ink); font-weight: 600; }
 .stagebar .spacer { flex: 1; }
@@ -219,6 +228,7 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
       <button class="tool" data-tool="erase" aria-pressed="false" title="Remove bead (E)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 20h11"/><path d="M4.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19H8z"/><path d="M9 11l5 5"/></svg><span class="lbl">Remove</span></button>
       <button class="tool" data-tool="fill" aria-pressed="false" title="Fill area (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 11l7-7 7 7-7 7z"/><path d="M4 11h14"/><path d="M20 15s1.8 2.3 1.8 3.6a1.8 1.8 0 0 1-3.6 0c0-1.3 1.8-3.6 1.8-3.6z"/></svg><span class="lbl">Fill</span></button>
       <button class="tool" data-tool="pick" aria-pressed="false" title="Pick a colour from the chart (I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M14.5 4.5a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3L17 12l-5-5z"/><path d="M12 7l-7 7v3l-1 3 3-1h3l7-7"/></svg><span class="lbl">Pick</span></button>
+      <button class="tool" data-tool="shape" aria-pressed="false" title="Shapes: moon, star, heart… (S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5l-5.3 2.9 1.2-6-4.5-4.1 6-.7z"/></svg><span class="lbl">Shape</span></button>
       <button class="tool" data-tool="pan" aria-pressed="false" title="Move around (space)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span class="lbl">Move</span></button>
       <hr>
       <button class="tool" id="btnMirror" aria-pressed="false" title="Mirror drawing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18" stroke-dasharray="2 2.5"/><path d="M8 7L3 17h5zM16 7l5 10h-5z"/></svg><span class="lbl" id="mirrorLbl">Mirror</span></button>
@@ -228,6 +238,31 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
 
     <section class="stage" aria-label="Pattern chart">
       <div class="scroller" id="scroller"><div class="scroller-inner"><canvas id="board" aria-label="Bead chart. Tap beads to colour them."></canvas></div></div>
+      <div class="shapebar" id="shapeBar" hidden>
+        <div class="grp" id="shapeKinds" role="group" aria-label="Shape">
+          <button class="chip" data-kind="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 4a8 8 0 1 0 5.5 12.5A7 7 0 0 1 15 4z"/></svg>Moon</button>
+          <button class="chip" data-kind="star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5l-5.3 2.9 1.2-6-4.5-4.1 6-.7z"/></svg>Star</button>
+          <button class="chip" data-kind="heart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Heart</button>
+          <button class="chip" data-kind="circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="12" r="8"/></svg>Circle</button>
+          <button class="chip" data-kind="triangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 4l8.5 15h-17z"/></svg>Triangle</button>
+          <button class="chip" data-kind="diamond"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l7 9-7 9-7-9z"/></svg>Diamond</button>
+          <button class="chip" data-kind="square"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>Square</button>
+        </div>
+        <div class="grp" id="shapeStyles" role="group" aria-label="Style">
+          <button class="chip" data-style="fill">Filled</button>
+          <button class="chip" data-style="outline">Outline</button>
+          <button class="chip" data-style="cut">Cut out</button>
+        </div>
+        <label class="slider" data-for="star"><span>Points <b id="soPointsV">5</b></span><input type="range" id="soPoints" min="3" max="10" step="1" value="5"></label>
+        <label class="slider" data-for="star"><span>Points: chubby ↔ sharp <b id="soDepthV"></b></span><input type="range" id="soDepth" min="20" max="80" step="1" value="55"></label>
+        <label class="slider" data-for="moon"><span>Moon: thin ↔ full <b id="soThickV"></b></span><input type="range" id="soThick" min="12" max="80" step="1" value="38"></label>
+        <label class="slider" data-for="moon"><span>Moon tips: short ↔ long <b id="soTipsV"></b></span><input type="range" id="soTips" min="0" max="100" step="1" value="35"></label>
+        <label class="slider"><span>Turn <b id="soRotV">0°</b></span><input type="range" id="soRot" min="-180" max="180" step="5" value="0"></label>
+        <label class="slider"><span>Edge beads: fewer ↔ more <b id="soEdgeV"></b></span><input type="range" id="soEdge" min="15" max="85" step="1" value="50"></label>
+        <label class="row small" style="gap:6px;font-weight:600"><input type="checkbox" id="soSquare" checked> Perfect proportions</label>
+        <button class="btn" id="soDone" style="min-height:36px">Done</button>
+        <p class="shapehint" id="shapeHint">Drag on the chart to draw the shape, or tap to drop one 11 beads wide. Then drag it to move it, and use the sliders to fine-tune it until you tap Done.</p>
+      </div>
       <div class="stagebar">
         <span id="hoverInfo">Tap a bead to colour it</span>
         <span id="dimInfo"></span>
@@ -314,6 +349,14 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
               <li>Tap <b>Row done, next</b> after each row. Finished rows fade on the chart, and your place is saved.</li>
               <li>In peyote, string rows 1 and 2 together at the start, then add one row at a time.</li>
               <li>Brick stitch is usually worked from the longest row outward. Start your tracker wherever you start.</li>
+            </ul></details>
+          <details><summary>Drawing moons, stars and other shapes</summary>
+            <ul>
+              <li>Choose <b>Shape</b> in the toolbar, pick Moon, Star, Heart…, and drag a box on the chart.</li>
+              <li>The shape stays editable until you tap <b>Done</b>. Drag it to move it, change its colour, or use the sliders: moon thickness and tip length, number of star points and how sharp they are, turn, and how many beads sit on the edge.</li>
+              <li>Small shapes can't be perfectly smooth in beads. Stars look best 11 or more beads wide, moons 9 or more. Odd widths (11, 13, 15) keep a star's top point centred on one bead.</li>
+              <li><b>Outline</b> draws just the edge; <b>Cut out</b> removes beads in that shape, which is handy for cutting a moon out of a filled circle.</li>
+              <li>The app calculates the shape at the beads' real proportions, so a circle stays round even though Delica beads are taller than they are wide.</li>
             </ul></details>
           <details><summary>Drawing shortcuts</summary>
             <ul>
@@ -666,6 +709,12 @@ function render() {
     }
     bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawPattern(bctx, P, G, THEME, { labels: true, track: activeTab === 'rows' });
+    if (pending && tool === 'shape') {
+      const b = boxPx(pending.box);
+      bctx.save(); bctx.strokeStyle = THEME.accent; bctx.lineWidth = 1.5; bctx.setLineDash([6, 4]);
+      bctx.strokeRect(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1), Math.abs(b.x1 - b.x0), Math.abs(b.y1 - b.y0));
+      bctx.restore();
+    }
   });
 }
 function changed(sideNow) {
@@ -694,10 +743,10 @@ function setZoom(z, focus) {
 
 /* ---------- editing ---------- */
 function snapshot() { return { cells: P.cells.slice(), palette: P.palette.map(c => ({ ...c })), cols: P.cols, rows: P.rows, layout: P.layout, size: P.size, shape: P.shape }; }
-function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 120) undoStack.shift(); redoStack = []; updUndo(); }
+function pushUndo(keepShape) { if (!keepShape) pending = null; undoStack.push(snapshot()); if (undoStack.length > 120) undoStack.shift(); redoStack = []; updUndo(); }
 function restore(s) { Object.assign(P, { cells: s.cells.slice(), palette: s.palette.map(c => ({ ...c })), cols: s.cols, rows: s.rows, layout: s.layout, size: s.size, shape: s.shape }); cur = Math.min(cur, P.palette.length - 1); }
-function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); updUndo(); changed(true); }
-function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); updUndo(); changed(true); }
+function undo() { pending = null; if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); updUndo(); changed(true); }
+function redo() { pending = null; if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); updUndo(); changed(true); }
 function updUndo() { $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length; }
 
 function mirrors(r, c) {
@@ -751,12 +800,14 @@ board.addEventListener('pointerdown', e => {
   try { board.setPointerCapture(e.pointerId); } catch {}
   if (pointers.size === 2) {
     if (stroke) { if (stroke.changed) { restore(undoStack.pop()); updUndo(); render(); } stroke = null; }
+    if (shapeDrag) { if (shapeDrag.mode === 'new') { P.cells.set(pending.before); pending = null; undoStack.pop(); updUndo(); changed(true); } shapeDrag = null; }
     const [p1, p2] = [...pointers.values()];
     pinch = { d: Math.hypot(p1[0] - p2[0], p1[1] - p2[1]), z: zoom, mid: [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], sl: scroller.scrollLeft, st: scroller.scrollTop };
     return;
   }
   if (pointers.size > 2) return;
   if (tool === 'pan' || e.button === 1) { panDrag = { x: e.clientX, y: e.clientY, sl: scroller.scrollLeft, st: scroller.scrollTop }; return; }
+  if (tool === 'shape') { e.preventDefault(); shapeDown(evPos(e)); return; }
   const cell = G && G.hit(...evPos(e)); if (!cell) return;
   e.preventDefault();
   pushUndo();
@@ -779,6 +830,7 @@ board.addEventListener('pointermove', e => {
     return;
   }
   if (panDrag) { scroller.scrollLeft = panDrag.sl - (e.clientX - panDrag.x); scroller.scrollTop = panDrag.st - (e.clientY - panDrag.y); return; }
+  if (shapeDrag) { shapeMove(pos); return; }
   if (!stroke || !cell) return;
   const path = lastCell ? cellsBetween(lastCell, cell) : [cell];
   let any = false; for (const cc of path) any = applyAt(cc) || any;
@@ -790,6 +842,7 @@ function endPointer(e) {
   if (pointers.size < 2) pinch = null;
   if (pointers.size === 0) {
     panDrag = null;
+    if (shapeDrag) shapeUp();
     if (stroke) { if (!stroke.changed) { undoStack.pop(); updUndo(); } stroke = null; renderSide(); }
     lastCell = null;
   }
@@ -807,8 +860,133 @@ function showHover(cell) {
   el.innerHTML = `<b>${rowLbl}</b> · bead ${c + 1} · ${v >= 0 ? esc(P.palette[v].name) : 'empty'}`;
 }
 
+/* ---------- shapes ---------- */
+// The box is kept in bead units (column, row) so it survives zooming. Shapes are tested at the
+// beads' real proportions, sampling a 4×4 grid of points inside each bead.
+let pending = null, shapeDrag = null;
+const shapeOpt = { kind: 'moon', style: 'fill', points: 5, depth: 0.45, thick: 0.38, tips: 0.35, rot: 0, edge: 0.5, square: true };
+const toUnits = ([x, y]) => [(x - G.GL) / G.cw, (y - G.GT) / G.ch];
+const snapU = ([u, v]) => [Math.round(u * 2) / 2, Math.round(v * 2) / 2];
+function boxPx(b) { return { x0: G.GL + b.x0 * G.cw, y0: G.GT + b.y0 * G.ch, x1: G.GL + b.x1 * G.cw, y1: G.GT + b.y1 * G.ch }; }
+function polyTest(pts) {
+  return (u, v) => { let inside = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > v) !== (yj > v) && u < (xj - xi) * (v - yi) / (yj - yi) + xi) inside = !inside; } return inside; };
+}
+function shapeTest(o) {
+  switch (o.kind) {
+    case 'circle': return (u, v) => u * u + v * v <= 1;
+    case 'square': return (u, v) => Math.abs(u) <= 1 && Math.abs(v) <= 1;
+    case 'triangle': return polyTest([[0, -1], [1, 0.95], [-1, 0.95]]);
+    case 'diamond': return polyTest([[0, -1], [1, 0], [0, 1], [-1, 0]]);
+    case 'heart': return (u, v) => { const x = u * 1.139, y = -v * 1.118 + 0.118, a = x * x + y * y - 1; return a * a * a - x * x * y * y * y <= 0; };
+    case 'star': {
+      const n = o.points, pts = [];
+      for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, r = i % 2 ? o.depth : 1; pts.push([r * Math.sin(a), -r * Math.cos(a)]); }
+      // a star with an odd number of points is taller than it is wide; centre it in the box
+      const ys = pts.map(p => p[1]), minY = Math.min(...ys), maxY = Math.max(...ys), xs = pts.map(p => p[0]), maxX = Math.max(...xs);
+      const sy = 2 / (maxY - minY), sx = 1 / maxX, oy = (maxY + minY) / 2;
+      return polyTest(pts.map(([x, y]) => [x * sx, (y - oy) * sy]));
+    }
+    case 'moon': default: {
+      // crescent: the big disc minus a second disc shifted right. thick = width of the band at its widest
+      // (as a share of the diameter); tips = how far the bite reaches, which lengthens or shortens the horns.
+      const r2 = 1.02 - o.tips * 0.3, d = 2 * o.thick - 1 + r2;
+      return (u, v) => u * u + v * v <= 1 && (u - d) * (u - d) + v * v > r2 * r2;
+    }
+  }
+}
+function shapeCells(b) {
+  const px = boxPx(b), out = [];
+  const cx = (px.x0 + px.x1) / 2, cy = (px.y0 + px.y1) / 2, hw = Math.abs(px.x1 - px.x0) / 2, hh = Math.abs(px.y1 - px.y0) / 2;
+  if (hw < G.cw * 0.6 || hh < G.ch * 0.6) return out;
+  const test = shapeTest(shapeOpt), th = -shapeOpt.rot * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th), S = 4;
+  const need = 1 - shapeOpt.edge, inside = new Uint8Array(P.cells.length);
+  for (let r = 0; r < P.rows; r++) for (let c = 0; c < P.cols; c++) {
+    const [x, y] = G.xy(r, c);
+    let hits = 0;
+    for (let i = 0; i < S; i++) for (let j = 0; j < S; j++) {
+      const dx = x + (i + 0.5) / S * G.cw - cx, dy = y + (j + 0.5) / S * G.ch - cy;
+      if (test((dx * cs - dy * sn) / hw, (dx * sn + dy * cs) / hh)) hits++;
+    }
+    if (hits / (S * S) >= need && hits > 0) inside[r * P.cols + c] = 1;
+  }
+  for (let r = 0; r < P.rows; r++) for (let c = 0; c < P.cols; c++) {
+    if (!inside[r * P.cols + c]) continue;
+    if (shapeOpt.style === 'outline' && neighbors(r, c).every(([a, bb]) => inside[a * P.cols + bb])) continue;
+    out.push([r, c]);
+  }
+  return out;
+}
+function applyPending() {
+  if (!pending) return;
+  P.cells.set(pending.before);
+  const v = shapeOpt.style === 'cut' ? -1 : cur;
+  const cells = shapeCells(pending.box);
+  for (const [r, c] of cells) paint(r, c, v);
+  if (cells.length && P.example) P.example = false;
+  const w = Math.abs(pending.box.x1 - pending.box.x0), h = Math.abs(pending.box.y1 - pending.box.y0);
+  $('#hoverInfo').innerHTML = `<b>${esc(shapeOpt.kind[0].toUpperCase() + shapeOpt.kind.slice(1))}</b> · about ${Math.round(w)} × ${Math.round(h)} beads · ${cells.length} beads`;
+  changed();
+}
+function commitShape() { if (pending) { pending = null; renderSide(); render(); } syncShapeUI(); }
+function inBox(u, b) { return u[0] >= Math.min(b.x0, b.x1) && u[0] <= Math.max(b.x0, b.x1) && u[1] >= Math.min(b.y0, b.y1) && u[1] <= Math.max(b.y0, b.y1); }
+function shapeDown(pos) {
+  const u = toUnits(pos);
+  if (pending && inBox(u, pending.box)) { shapeDrag = { mode: 'move', start: u, box0: { ...pending.box } }; return; }
+  commitShape(); pushUndo(true);
+  const s = snapU(u);
+  pending = { before: P.cells.slice(), box: { x0: s[0], y0: s[1], x1: s[0], y1: s[1] } };
+  shapeDrag = { mode: 'new', start: s, tap: u, moved: false };
+}
+function shapeMove(pos) {
+  const u = toUnits(pos);
+  if (shapeDrag.mode === 'move') {
+    const dx = Math.round((u[0] - shapeDrag.start[0]) * 2) / 2, dy = Math.round((u[1] - shapeDrag.start[1]) * 2) / 2, b = shapeDrag.box0;
+    pending.box = { x0: b.x0 + dx, y0: b.y0 + dy, x1: b.x1 + dx, y1: b.y1 + dy };
+  } else {
+    const e = snapU(u), s = shapeDrag.start;
+    let dx = e[0] - s[0], dy = e[1] - s[1];
+    if (shapeOpt.square) { // equal size in millimetres, not in beads
+      const m = Math.max(Math.abs(dx) * G.cw, Math.abs(dy) * G.ch);
+      dx = Math.sign(dx || 1) * Math.round(m / G.cw * 2) / 2; dy = Math.sign(dy || 1) * Math.round(m / G.ch * 2) / 2;
+    }
+    if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) shapeDrag.moved = true;
+    pending.box = { x0: s[0], y0: s[1], x1: s[0] + dx, y1: s[1] + dy };
+  }
+  applyPending();
+}
+function shapeUp() {
+  if (shapeDrag.mode === 'new' && !shapeDrag.moved) {
+    // a tap drops a shape 11 beads wide, centred on the tapped bead
+    const cell = G.hit(G.GL + shapeDrag.tap[0] * G.cw, G.GT + shapeDrag.tap[1] * G.ch);
+    if (!cell) { pending = null; undoStack.pop(); updUndo(); shapeDrag = null; render(); return; }
+    const [x, y] = G.xy(cell[0], cell[1]), cu = (x - G.GL) / G.cw + 0.5, cv = (y - G.GT) / G.ch + 0.5;
+    const hw = 5.5, hh = shapeOpt.square ? 5.5 * G.cw / G.ch : 5.5;
+    pending.box = { x0: cu - hw, y0: cv - hh, x1: cu + hw, y1: cv + hh };
+    applyPending();
+  }
+  shapeDrag = null; renderSide(); render(); syncShapeUI();
+}
+function syncShapeUI() {
+  $$('#shapeKinds .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.kind === shapeOpt.kind));
+  $$('#shapeStyles .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.style === shapeOpt.style));
+  $$('.slider[data-for]').forEach(l => l.hidden = l.dataset.for !== shapeOpt.kind);
+  $('#soPointsV').textContent = shapeOpt.points; $('#soRotV').textContent = shapeOpt.rot + '°';
+  $('#soDepthV').textContent = ''; $('#soThickV').textContent = Math.round(shapeOpt.thick * 100) + '%';
+  $('#soTipsV').textContent = ''; $('#soEdgeV').textContent = '';
+  $('#soDone').hidden = !pending;
+  $('#shapeHint').textContent = pending ? 'Drag the shape to move it. Change the colour or sliders to adjust it. Tap Done when you like it.' : 'Drag on the chart to draw the shape, or tap to drop one 11 beads wide.';
+}
+$$('#shapeKinds .chip').forEach(b => b.addEventListener('click', () => { shapeOpt.kind = b.dataset.kind; syncShapeUI(); applyPending(); }));
+$$('#shapeStyles .chip').forEach(b => b.addEventListener('click', () => { shapeOpt.style = b.dataset.style; syncShapeUI(); applyPending(); }));
+[['#soPoints', v => shapeOpt.points = +v], ['#soDepth', v => shapeOpt.depth = 1 - v / 100], ['#soThick', v => shapeOpt.thick = v / 100],
+ ['#soTips', v => shapeOpt.tips = v / 100], ['#soRot', v => shapeOpt.rot = +v], ['#soEdge', v => shapeOpt.edge = v / 100]]
+  .forEach(([id, f]) => $(id).addEventListener('input', e => { f(e.target.value); syncShapeUI(); applyPending(); }));
+$('#soSquare').addEventListener('change', e => { shapeOpt.square = e.target.checked; });
+$('#soDone').addEventListener('click', () => { commitShape(); syncShapeUI(); });
+syncShapeUI();
+
 /* ---------- tools UI ---------- */
-function setTool(t) { tool = t; $$('.tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); board.style.cursor = t === 'pan' ? 'grab' : t === 'pick' ? 'copy' : 'crosshair'; }
+function setTool(t) { if (t !== 'shape') commitShape(); tool = t; $('#shapeBar').hidden = t !== 'shape'; render(); $$('.tool[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t)); board.style.cursor = t === 'pan' ? 'grab' : t === 'pick' ? 'copy' : 'crosshair'; }
 $$('.tool[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
 const MIRRORS = ['none', 'h', 'v', 'both'], MIRROR_LBL = { none: 'Mirror', h: '↔ L/R', v: '↕ T/B', both: '✛ 4-way' };
 $('#btnMirror').addEventListener('click', () => {
@@ -826,7 +1004,7 @@ document.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
-  const map = { b: 'draw', e: 'erase', f: 'fill', i: 'pick', ' ': 'pan' };
+  const map = { b: 'draw', e: 'erase', f: 'fill', i: 'pick', s: 'shape', ' ': 'pan' };
   if (map[k]) { e.preventDefault(); setTool(map[k]); }
 });
 
@@ -838,7 +1016,7 @@ $$('.tab').forEach(t => t.addEventListener('click', () => {
   renderSide(); render();
 }));
 function counts() { const n = new Array(P.palette.length).fill(0); for (const v of P.cells) if (v >= 0) n[v]++; return n; }
-function selectColor(i) { cur = i; replaceMode = false; pendingDelete = null; renderColors(); if (tool === 'erase' || tool === 'pick') setTool('draw'); }
+function selectColor(i) { cur = i; replaceMode = false; pendingDelete = null; renderColors(); if (pending) applyPending(); if (tool === 'erase' || tool === 'pick') setTool('draw'); }
 function renderSide() { $('#curChip').style.background = P.palette[cur]?.hex || 'transparent'; renderColors(); if (activeTab === 'count') renderCount(); if (activeTab === 'rows') renderRows(); $('#dimInfo').textContent = `${P.cols} × ${P.layout === 'peyote' ? P.rows * 2 + ' peyote rows' : P.rows + ' rows'} · ${LAYOUT_NAMES[P.layout]} · ${SIZES[P.size].label}`; }
 function renderColors() {
   const n = counts();
@@ -1022,6 +1200,7 @@ async function deletePattern(id) {
   if (store.db) { try { await store.db.collection(`data/users/${store.uid}`).doc(id).delete(); } catch {} }
 }
 function openPattern(p, fit = true) {
+  pending = null; shapeDrag = null;
   P = p; cur = Math.min(2, P.palette.length - 1); undoStack = []; redoStack = []; updUndo(); replaceMode = false; pendingDelete = null;
   $('#patName').value = P.name; lsSet(LS_LAST, P.id);
   setState(P.example ? 'Example pattern. Start drawing to make it yours.' : store.db ? 'Saved to your account' : 'Saved on this device');
