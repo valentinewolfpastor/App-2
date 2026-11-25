@@ -205,36 +205,41 @@ body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--ink); outli
 .sheet .foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .sheet .danger { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
 
-/* ---------- Stage (contemplate) ---------- */
-.stage { position: fixed; inset: 0; z-index: 40; background: var(--stage); color: var(--stage-ink); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; animation: fade .5s ease; }
-.stage .glow { position: absolute; inset: -20%; filter: blur(90px); opacity: .32; transition: background 2.5s ease; pointer-events: none; }
-.stage header, .stage footer { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
-.stage header { padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: 12px; }
-.stage footer { padding-top: 12px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; }
-.stage .sname { font-family: var(--font-display); font-size: 24px; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stage .ib { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 0; background: transparent; color: var(--stage-ink); }
-.stage .ib:hover { background: rgb(255 255 255 / .1); }
-.stage .ib.main { background: var(--stage-ink); color: var(--stage); }
+/* ---------- Stage (contemplate): every photo on one screen ---------- */
+.stage { position: fixed; inset: 0; z-index: 40; background: var(--stage); color: var(--stage-ink); overflow: hidden; animation: fade .6s ease; }
+.stage .glow { position: absolute; inset: -20%; filter: blur(110px); opacity: .28; pointer-events: none; animation: breathe 14s ease-in-out infinite alternate; }
+@keyframes breathe { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.12) rotate(8deg); } }
+.stage .scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.stage .scroller::-webkit-scrollbar { display: none; }
+.stage .canvas { position: relative; margin: 0 auto; }
+.stage .ptile { position: absolute; border: 0; padding: 0; border-radius: 6px; overflow: hidden; background: rgb(255 255 255 / .04); cursor: zoom-in; opacity: 0; animation: appear 1.4s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes appear { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.stage .ptile img { width: 100%; height: 100%; object-fit: cover; display: block; animation: kb var(--dur, 24s) ease-in-out infinite alternate; animation-delay: var(--delay, 0s); transform-origin: var(--ox, 50%) var(--oy, 50%); }
+@keyframes kb { from { transform: scale(1); } to { transform: scale(1.14); } }
+.stage .ptile:hover img { filter: brightness(1.08); }
+.stage .chrome { position: absolute; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 14px; padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); transition: opacity .8s ease; pointer-events: none; }
+.stage .chrome > * { pointer-events: auto; }
+.stage .chrome.top { top: 0; padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: 40px; background: linear-gradient(rgb(0 0 0 / .65), transparent); }
+.stage .chrome.bot { bottom: 0; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); padding-top: 50px; background: linear-gradient(transparent, rgb(0 0 0 / .7)); align-items: flex-end; }
+.stage.idle .chrome { opacity: 0; }
+.stage.idle { cursor: none; }
+.stage .sname { font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 40px); line-height: 1; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; }
+.stage .sname small { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--stage-muted); margin-bottom: 8px; }
+.stage .ib { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .08); color: var(--stage-ink); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); flex: none; }
+.stage .ib:hover { background: rgb(255 255 255 / .18); }
 .stage .ib svg { width: 18px; height: 18px; }
-.stage .frame { position: relative; z-index: 1; margin: 0 max(20px, env(safe-area-inset-left, 0px)); min-height: 0; }
-.stage .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1.6s ease; }
-.stage .frame img.on { opacity: 1; animation: drift 11s ease-out forwards; }
-@keyframes drift { from { transform: scale(1); } to { transform: scale(1.045); } }
-.stage .opening { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 22px; padding: 20px; opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
-.stage .opening.on { opacity: 1; }
-.stage .opening .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--stage-muted); }
-.stage .opening h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(56px, 11vw, 140px); letter-spacing: -.03em; line-height: .92; margin: 0; text-wrap: balance; }
-.stage .opening p { max-width: 50ch; margin: 0 auto; font-family: var(--font-display); font-style: italic; font-size: clamp(19px, 2.2vw, 24px); line-height: 1.4; color: color-mix(in srgb, var(--stage-ink) 80%, var(--stage)); }
-.stage .opening .bands { display: flex; gap: 6px; justify-content: center; }
-.stage .opening .bands i { width: 26px; height: 34px; border-radius: 6px; }
-.stage .cap { flex: 1 1 260px; min-width: 0; font-family: var(--font-display); font-style: italic; font-size: 20px; color: color-mix(in srgb, var(--stage-ink) 90%, var(--stage)); }
-.stage .count { font-family: var(--font-mono); font-size: 11px; color: var(--stage-muted); letter-spacing: .06em; }
-.stage .dots { display: flex; gap: 5px; }
-.stage .dots i { width: 10px; height: 10px; border-radius: 50%; }
-.stage .ctl { display: flex; gap: 6px; align-items: center; }
-.stage .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / .45); width: 0; z-index: 3; }
-.stage .bar.run { animation: fill linear forwards; }
-@keyframes fill { to { width: 100%; } }
+.stage .words { flex: 1 1 auto; min-width: 0; max-width: 62ch; margin-right: auto; font-family: var(--font-display); font-style: italic; font-size: clamp(17px, 1.7vw, 21px); line-height: 1.4; color: color-mix(in srgb, var(--stage-ink) 85%, var(--stage)); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.stage .dots { display: flex; gap: 5px; flex: none; }
+.stage .dots i { width: 12px; height: 12px; border-radius: 50%; }
+.stage .focus { position: absolute; inset: 0; z-index: 4; display: grid; grid-template-rows: 1fr auto; gap: 14px; padding: calc(24px + env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px)); background: rgb(7 7 7 / .9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: fade .35s ease; cursor: zoom-out; }
+.stage .focus img { width: 100%; height: 100%; object-fit: contain; min-height: 0; animation: rise .4s cubic-bezier(.2,.7,.2,1); }
+.stage .focus p { margin: 0; text-align: center; font-family: var(--font-display); font-style: italic; font-size: 20px; color: color-mix(in srgb, var(--stage-ink) 88%, var(--stage)); }
+.stage .focus p:empty { display: none; }
+.stage .focus .ib { position: absolute; top: 50%; transform: translateY(-50%); }
+.stage .focus .ib.l { left: max(12px, env(safe-area-inset-left, 0px)); }
+.stage .focus .ib.r { right: max(12px, env(safe-area-inset-right, 0px)); }
+.stage .focus .ib.x { top: calc(16px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); transform: none; }
+@media (prefers-reduced-motion: reduce) { .stage .ptile img, .stage .glow { animation: none; } }
 
 .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 999px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: var(--shadow); animation: rise .25s ease; }
 .loading { padding-block: 100px; color: var(--muted); text-align: center; font-family: var(--font-display); font-style: italic; font-size: 24px; }
@@ -260,13 +265,11 @@ body.dragging .drop, body.dragging .wall { outline: 2px dashed var(--ink); outli
   #newTop { width: 40px; padding: 0; }
   .dock .btn { padding: 0 14px; }
   .row2 { grid-template-columns: 1fr; }
-  .stage .frame { margin: 0; }
   .scrim { place-items: end center; padding: 0; }
   .sheet { border-radius: 24px 24px 0 0; width: 100%; padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .15s !important; }
-  .stage .frame img.on { animation: none; }
 }
 </style>
 
@@ -803,7 +806,7 @@ function renderDock(id) {
   const setLayout = (l) => { b.layout = l; save(id); render(); };
   return h('nav', { class: 'dock', 'aria-label': 'Board actions' },
     canAdd ? h('button', { class: 'btn dark', type: 'button', onclick: () => pick(id), title: 'Add photos' }, icon('plus'), lbl('Add photos')) : null,
-    h('button', { class: 'btn', type: 'button', disabled: !b.photos.length, onclick: () => openStage(id, -1), title: 'Contemplate' }, icon('play'), lbl('Contemplate')),
+    h('button', { class: 'btn', type: 'button', disabled: !b.photos.length, onclick: () => openStage(id), title: 'Contemplate' }, icon('play'), lbl('Contemplate')),
     sample ? h('button', { class: 'btn' + (reflecting ? ' spin' : ''), type: 'button', disabled: reflecting || (!b.photos.length && !b.note), onclick: () => reflect(id), title: 'Reflect with Claude' },
       icon('spark'), lbl(reflecting ? 'Looking…' : 'Reflect')) : null,
     b.photos.length ? h('span', { class: 'sep' }) : null,
@@ -814,7 +817,7 @@ function renderDock(id) {
 
 function renderTile(id, b, p, i) {
   const img = photoImg(p, { alt: p.caption || 'Photo ' + (i + 1), style: b.layout === 'collage' ? { 'aspect-ratio': p.w + ' / ' + p.h } : null });
-  const ph = h('button', { class: 'ph', type: 'button', 'aria-label': 'View ' + (p.caption || 'photo ' + (i + 1)), onclick: () => openStage(id, i) }, img);
+  const ph = h('button', { class: 'ph', type: 'button', 'aria-label': 'View ' + (p.caption || 'photo ' + (i + 1)), onclick: () => openStage(id) }, img);
   const act = (name, title, fn, on) => h('button', { class: on ? 'on' : null, type: 'button', title, 'aria-label': title, onclick: fn }, icon(name));
   const move = (d) => { const j = i + d; if (j < 0 || j >= b.photos.length) return; [b.photos[i], b.photos[j]] = [b.photos[j], b.photos[i]]; save(id); render(); };
   const fig = h('figure', { class: 'tile' + (p.feat && b.layout === 'collage' ? ' feat' : '') },
@@ -940,90 +943,118 @@ document.addEventListener('paste', (e) => {
   if (files.length) { e.preventDefault(); addFiles(r.id, files); }
 });
 
-/* ---------- Contemplate stage ---------- */
+/* ---------- Contemplate stage: the whole board on one screen ---------- */
+/* Justified rows sized so every photo fits the screen; scrolls only when the board is very large. */
+function justify(ars, W, H, gap) {
+  const N = ars.length, totalAR = ars.reduce((n, a) => n + a, 0);
+  // Split photos (in order) into k rows of roughly equal width, each row scaled to the full width.
+  const build = (k) => {
+    const target = totalAR / k, rows = []; let row = [], sum = 0, cum = 0;
+    ars.forEach((ar, i) => {
+      row.push(i); sum += ar; cum += ar;
+      const left = N - i - 1, rowsLeft = k - rows.length - 1;
+      if (rowsLeft > 0 && left >= rowsLeft && (cum >= target * (rows.length + 1) - ar / 2 || left === rowsLeft)) { rows.push({ items: row, sum }); row = []; sum = 0; }
+    });
+    if (row.length) rows.push({ items: row, sum });
+    rows.forEach((r) => { r.h = Math.min((W - gap * (r.items.length - 1)) / r.sum, H); });
+    return { rows, total: rows.reduce((n, r) => n + r.h, 0) + gap * (rows.length - 1) };
+  };
+  let best = build(1);
+  for (let k = 2; k <= N; k++) { const l = build(k); if (l.total <= H) best = l; else break; }
+  const minT = W < 600 ? 110 : 150;
+  if (N > 1 && Math.min(...best.rows.map((r) => r.h)) < minT) best = build(Math.min(N, Math.max(1, Math.ceil(totalAR * minT / W))));
+  const out = []; let y = 0;
+  for (const r of best.rows) {
+    const rowW = r.sum * r.h + gap * (r.items.length - 1);
+    let x = (W - rowW) / 2;
+    for (const i of r.items) { const w = ars[i] * r.h; out[i] = { x, y, w, h: r.h }; x += w + gap; }
+    y += r.h + gap;
+  }
+  return { boxes: out, height: Math.max(0, y - gap) };
+}
+
 let stage = null;
-function openStage(id, start) {
+function openStage(id, focusAt) {
   const b = boards[id]; if (!b || !b.photos.length) return;
   closeStage();
-  const DWELL = 8000;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let i = start, playing = true, timer = null, active = 0;
-  const layers = [h('img', { alt: '' }), h('img', { alt: '' })];
-  const r = b.reflection;
-  const opening = h('div', { class: 'opening' },
-    h('div', { class: 'k' }, label(b)),
-    h('h2', {}, b.name || 'Untitled'),
-    b.palette.length ? h('div', { class: 'bands' }, b.palette.map((c) => h('i', { style: { background: safeHex(c) } }))) : null,
-    r && r.text ? h('p', {}, r.text) : b.note ? h('p', {}, b.note) : null);
-  const glow = h('div', { class: 'glow' });
-  const cap = h('div', { class: 'cap', 'aria-live': 'polite' });
-  const count = h('div', { class: 'count' });
-  const dots = h('div', { class: 'dots', 'aria-hidden': 'true' });
-  const bar = h('div', { class: 'bar' });
-  const playBtn = h('button', { class: 'ib main', type: 'button' });
-  const setPlayIcon = () => { playBtn.replaceChildren(icon(playing ? 'pause' : 'play')); playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play'); playBtn.title = playing ? 'Pause (space)' : 'Play (space)'; };
-  const go = (n) => { i = n; show(); };
-  const next = () => go(i + 1 >= b.photos.length ? -1 : i + 1);
-  const prev = () => go(i - 1 < -1 ? b.photos.length - 1 : i - 1);
-  function schedule() {
-    clearTimeout(timer);
-    bar.classList.remove('run'); void bar.offsetWidth;
-    if (!playing) return;
-    bar.style.animationDuration = DWELL + 'ms'; bar.classList.add('run');
-    timer = setTimeout(next, DWELL);
+  const photos = b.photos.slice();
+  const pal = b.palette.length ? b.palette : [KINDS[b.kind].color];
+  const glow = h('div', { class: 'glow', style: { background: 'radial-gradient(circle at 20% 25%, ' + safeHex(pal[0]) + ', transparent 50%), radial-gradient(circle at 80% 30%, ' + safeHex(pal[Math.floor(pal.length / 2)]) + ', transparent 50%), radial-gradient(circle at 50% 90%, ' + safeHex(pal[pal.length - 1]) + ', transparent 55%)' } });
+  const canvas = h('div', { class: 'canvas' });
+  const scroller = h('div', { class: 'scroller' }, canvas);
+  const tiles = photos.map((p, i) => {
+    const img = photoImg(p, { alt: p.caption || 'Photo ' + (i + 1), loading: 'eager' });
+    const r = (n) => (Math.sin((i + 1) * 9301 + n * 49297) * 0.5 + 0.5);
+    img.style.setProperty('--dur', (20 + r(1) * 14).toFixed(1) + 's');
+    img.style.setProperty('--delay', (-r(2) * 20).toFixed(1) + 's');
+    img.style.setProperty('--ox', Math.round(r(3) * 100) + '%');
+    img.style.setProperty('--oy', Math.round(r(4) * 100) + '%');
+    const t = h('button', { class: 'ptile', type: 'button', 'aria-label': 'Enlarge ' + (p.caption || 'photo ' + (i + 1)), style: { 'animation-delay': (i * 70) + 'ms' }, onclick: () => focus(i) }, img);
+    canvas.append(t);
+    return t;
+  });
+  const btn = (name, lab, fn, cls) => h('button', { class: 'ib' + (cls ? ' ' + cls : ''), type: 'button', 'aria-label': lab, title: lab, onclick: (e) => { e.stopPropagation(); fn(); } }, icon(name));
+  const text = b.reflection && b.reflection.text ? b.reflection.text : b.note;
+  const top = h('div', { class: 'chrome top' },
+    h('div', { class: 'sname' }, h('small', {}, label(b) + ' · ' + plural(photos.length, 'photo', 'photos')), b.name || 'Untitled'),
+    document.fullscreenEnabled ? btn('full', 'Full screen', () => { (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()).catch(() => {}); }) : null,
+    btn('close', 'Close (Esc)', closeStage));
+  const bot = h('div', { class: 'chrome bot' },
+    text ? h('div', { class: 'words' }, text) : h('div', { class: 'words' }),
+    h('div', { class: 'dots', 'aria-hidden': 'true' }, pal.map((c) => h('i', { style: { background: safeHex(c) } }))));
+  const el = h('div', { class: 'stage', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Contemplate ' + (b.name || 'board') }, glow, scroller, top, bot);
+
+  function layout() {
+    const narrow = window.innerWidth < 600;
+    const padX = narrow ? 10 : Math.max(28, window.innerWidth * 0.04);
+    const padTop = narrow ? 86 : 100, padBot = narrow ? 70 : 90;
+    const W = window.innerWidth - padX * 2, H = window.innerHeight - padTop - padBot;
+    const gap = narrow ? 4 : 8;
+    const { boxes, height } = justify(photos.map((p) => p.w / p.h), W, H, gap);
+    canvas.style.width = W + 'px';
+    canvas.style.height = height + 'px';
+    canvas.style.marginTop = (height < H ? padTop + (H - height) / 2 : padTop) + 'px';
+    canvas.style.marginBottom = padBot + 'px';
+    boxes.forEach((bx, i) => Object.assign(tiles[i].style, { left: bx.x + 'px', top: bx.y + 'px', width: bx.w + 'px', height: bx.h + 'px' }));
   }
-  function show() {
-    const p = i >= 0 ? b.photos[i] : null;
-    const colors = p ? p.colors : b.palette;
-    const c = colors.length ? colors : [KINDS[b.kind].color];
-    glow.style.background = 'radial-gradient(circle at 25% 30%, ' + safeHex(c[0]) + ', transparent 55%), radial-gradient(circle at 75% 70%, ' + safeHex(c[1] || c[0]) + ', transparent 55%)';
-    dots.replaceChildren(...c.map((x) => h('i', { style: { background: safeHex(x) } })));
-    if (!p) {
-      layers.forEach((l) => l.classList.remove('on'));
-      opening.classList.add('on');
-      cap.textContent = plural(b.photos.length, 'photo', 'photos');
-      count.textContent = '';
-    } else {
-      opening.classList.remove('on');
-      const nextLayer = layers[1 - active], cur = layers[active];
-      const reveal = () => { nextLayer.classList.remove('on'); void nextLayer.offsetWidth; nextLayer.classList.add('on'); cur.classList.remove('on'); active = 1 - active; };
-      nextLayer.onload = reveal;
-      nextLayer.alt = p.caption || '';
-      const u = store.url(p.id);
-      const applySrc = (src) => { if (nextLayer.src && nextLayer.src.endsWith(src) && nextLayer.complete) reveal(); else nextLayer.src = src; };
-      if (typeof u === 'string') applySrc(u); else u.then(applySrc);
-      cap.textContent = p.caption || '';
-      count.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(b.photos.length).padStart(2, '0');
-      const n = b.photos[i + 1]; if (n) { const pre = new Image(); setImg(pre, n.id); }
-    }
-    schedule();
+
+  let focused = null, focusEl = null;
+  function focus(i) {
+    unfocus();
+    focused = (i + photos.length) % photos.length;
+    const p = photos[focused];
+    focusEl = h('div', { class: 'focus', onclick: unfocus },
+      photoImg(p, { alt: p.caption || '' }),
+      h('p', {}, p.caption || ''),
+      photos.length > 1 ? btn('left', 'Previous (←)', () => focus(focused - 1), 'l') : null,
+      photos.length > 1 ? btn('right', 'Next (→)', () => focus(focused + 1), 'r') : null,
+      btn('close', 'Back to the board', unfocus, 'x'));
+    el.append(focusEl);
   }
-  playBtn.addEventListener('click', () => { playing = !playing; setPlayIcon(); schedule(); });
-  const btn = (name, lab, fn) => h('button', { class: 'ib', type: 'button', 'aria-label': lab, title: lab, onclick: fn }, icon(name));
-  const el = h('div', { class: 'stage', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Contemplate ' + (b.name || 'board') },
-    glow,
-    h('header', {}, h('div', { class: 'sname' }, b.name || 'Untitled'),
-      document.fullscreenEnabled ? btn('full', 'Full screen', () => { (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()).catch(() => {}); }) : null,
-      btn('close', 'Close (Esc)', closeStage)),
-    h('div', { class: 'frame', onclick: (e) => { const x = e.clientX / window.innerWidth; x < 0.3 ? prev() : next(); } }, layers, opening),
-    h('footer', {}, cap, dots, count, h('div', { class: 'ctl' }, btn('left', 'Previous (←)', prev), playBtn, btn('right', 'Next (→)', next))),
-    bar);
-  if (reduce) layers.forEach((l) => l.style.transitionDuration = '.4s');
+  function unfocus() { focusEl?.remove(); focusEl = null; focused = null; }
+
+  let idleTimer = null;
+  const wake = () => { el.classList.remove('idle'); clearTimeout(idleTimer); idleTimer = setTimeout(() => el.classList.add('idle'), 3500); };
+  el.addEventListener('pointermove', wake);
+  el.addEventListener('pointerdown', wake);
   const onKey = (e) => {
-    if (e.key === 'Escape') closeStage();
-    else if (e.key === 'ArrowRight') next();
-    else if (e.key === 'ArrowLeft') prev();
-    else if (e.key === ' ') { e.preventDefault(); playBtn.click(); }
+    wake();
+    if (e.key === 'Escape') { focusEl ? unfocus() : closeStage(); }
+    else if (focusEl && e.key === 'ArrowRight') focus(focused + 1);
+    else if (focusEl && e.key === 'ArrowLeft') focus(focused - 1);
   };
+  const onResize = () => requestAnimationFrame(layout);
   document.addEventListener('keydown', onKey);
-  let wake = null;
-  navigator.wakeLock?.request('screen').then((w) => { wake = w; }, () => {});
-  stage = { el, stop: () => { clearTimeout(timer); document.removeEventListener('keydown', onKey); wake?.release().catch(() => {}); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } };
-  setPlayIcon();
+  window.addEventListener('resize', onResize);
+  let lock = null;
+  navigator.wakeLock?.request('screen').then((w) => { lock = w; }, () => {});
+  stage = { el, stop: () => { clearTimeout(idleTimer); document.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); lock?.release().catch(() => {}); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } };
   document.body.append(el);
   document.documentElement.style.overflow = 'hidden';
-  show();
-  playBtn.focus();
+  layout();
+  wake();
+  if (Number.isInteger(focusAt) && focusAt >= 0) focus(focusAt);
+  el.querySelector('.chrome.top .ib:last-child').focus({ preventScroll: true });
 }
 function closeStage() {
   if (!stage) return;
