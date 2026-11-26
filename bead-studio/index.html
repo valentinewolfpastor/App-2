@@ -235,6 +235,7 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
       <button class="tool" data-tool="pan" aria-pressed="false" title="Move around (space)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span class="lbl">Move</span></button>
       <hr>
       <button class="tool" id="btnMirror" aria-pressed="false" title="Mirror drawing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18" stroke-dasharray="2 2.5"/><path d="M8 7L3 17h5zM16 7l5 10h-5z"/></svg><span class="lbl" id="mirrorLbl">Mirror</span></button>
+      <button class="tool" id="btnBrush" aria-pressed="false" title="Brush size: how many beads one tap colours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg><span class="lbl" id="brushLbl">Brush 1</span></button>
       <button class="tool" id="btnUndo" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="lbl">Undo</span></button>
       <button class="tool" id="btnRedo" title="Redo (Ctrl+Shift+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg><span class="lbl">Redo</span></button>
     </nav>
@@ -398,8 +399,11 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
       <label class="field">Bead type and size<select id="sSize"></select></label>
       <label class="field">Bead shape on the chart<select id="sShape">
         <option value="cyl">Cylinder (Delica)</option><option value="round">Round seed bead</option><option value="pearl">Pearl</option><option value="square">Square bead</option></select></label>
-      <label class="field">Beads across (columns)<input type="number" id="sCols" min="2" max="150" value="30"></label>
-      <label class="field">Rows<input type="number" id="sRows" min="2" max="200" value="30"></label>
+      <label class="field"><span>Width (<span class="unitLbl">cm</span>)</span><input type="number" id="sWcm" min="0.5" step="0.1" inputmode="decimal"></label>
+      <label class="field"><span>Height (<span class="unitLbl">cm</span>)</span><input type="number" id="sHcm" min="0.5" step="0.1" inputmode="decimal"></label>
+      <label class="field">Beads across (columns)<input type="number" id="sCols" min="2" max="400" value="30" inputmode="numeric"></label>
+      <label class="field">Rows<input type="number" id="sRows" min="2" max="400" value="30" inputmode="numeric"></label>
+      <label class="field">Measure in<select id="sUnit"><option value="cm">Centimetres</option><option value="in">Inches</option></select></label>
     </div>
     <label class="field" id="sBgField">Start with<select id="sBg"></select></label>
     <div class="note small" id="sizeNote"></div>
@@ -447,6 +451,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const CH = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const MAX_COLORS = CH.length;
+const MAX_COLS = 400, MAX_ROWS = 400, MAX_CANVAS = 15e6; // canvas pixel budget that iPad Safari can draw
 const LS_KEY = 'bead-studio:patterns', LS_LAST = 'bead-studio:last';
 
 const SIZES = {
@@ -503,7 +508,7 @@ function serialize(p) {
 }
 function deserialize(id, d) {
   if (!d || typeof d.cells !== 'string') return null;
-  const cols = clamp(d.cols | 0, 2, 150), rows = clamp(d.rows | 0, 2, 200);
+  const cols = clamp(d.cols | 0, 2, MAX_COLS), rows = clamp(d.rows | 0, 2, MAX_ROWS);
   const palette = Array.isArray(d.palette) ? d.palette.slice(0, MAX_COLORS).map(c => ({
     name: String(c?.name ?? 'Colour').slice(0, 60), hex: /^#[0-9a-f]{6}$/i.test(c?.hex) ? c.hex : '#888888' })) : DEFAULT_PALETTE.slice();
   const p = { id, name: String(d.name || 'Untitled').slice(0, 80), layout: LAYOUT_NAMES[d.layout] ? d.layout : 'loom',
@@ -625,6 +630,11 @@ function beadPath(ctx, shape, x, y, w, h) {
   else rr(ctx, x, y, w, h, Math.min(w, h) * (shape === 'square' ? 0.12 : 0.28));
 }
 function drawBead(ctx, shape, x, y, w, h, hex, T) {
+  if (Math.min(w, h) < 6) { // zoomed far out: plain blocks read better and draw much faster
+    const g = Math.min(w, h) < 3.5 ? 0 : 0.6;
+    ctx.fillStyle = hex || T.line; ctx.fillRect(x + g / 2, y + g / 2, w - g, h - g);
+    return;
+  }
   const pad = Math.max(0.7, Math.min(w, h) * 0.07);
   x += pad; y += pad; w -= pad * 2; h -= pad * 2;
   if (!hex) {
@@ -669,7 +679,7 @@ function drawPattern(ctx, p, g, T, opt = {}) {
   }
   if (!opt.labels) return;
   // column numbers
-  const everyC = cw >= 17 ? 1 : cw >= 9 ? 5 : 10;
+  const everyC = [1, 5, 10, 20, 50].find(n => n * cw >= 18) || 100;
   ctx.font = `600 ${Math.min(11, Math.max(9, cw * 0.5))}px Inter, system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (let c = 0; c < p.cols; c++) {
@@ -678,17 +688,17 @@ function drawPattern(ctx, p, g, T, opt = {}) {
     ctx.fillText(n, g.GL + c * cw + cw / 2 + (p.layout === 'brick' ? cw / 4 : 0), g.GT / 2 + 1);
   }
   // row numbers, both sides
-  const fs = Math.min(11, Math.max(8.5, ch * 0.42));
-  const th = Math.min(ch - 2, 18), tw = 28;
-  const every = th >= 11 ? 1 : 5;
+  const every = [1, 5, 10, 20, 50].find(n => n * ch >= 15) || 100;
+  const th = every === 1 ? Math.min(ch - 2, 18) : 12, tw = 28;
+  const fs = every === 1 ? Math.min(11, Math.max(8.5, ch * 0.42)) : 9;
   const done = n => opt.track && n <= p.progress;
   const rightX = g.W - g.GL + 6;
   for (let r = 0; r < p.rows; r++) {
     if (p.layout === 'peyote') {
       const a = 2 * (p.rows - 1 - r) + 2, b = a - 1;   // left: unshifted columns, right: shifted
       const ty = g.GT + r * ch + (ch - th) / 2;
-      if (a % (every === 1 ? 1 : 10) === 0 || every === 1) tag(ctx, T, g.GL - tw - 6, ty, tw, th, a, fs, done(a));
-      if (every === 1 || b === 1 || (b + 1) % 10 === 0) tag(ctx, T, rightX, ty + ch / 2, tw, th, b, fs, done(b));
+      if (every === 1 || a % (every * 2) === 0) tag(ctx, T, g.GL - tw - 6, ty, tw, th, a, fs, done(a));
+      if (every === 1 || b === 1 || (b + 1) % (every * 2) === 0) tag(ctx, T, rightX, ty + ch / 2, tw, th, b, fs, done(b));
     } else {
       const n = p.rows - r; if (every > 1 && n !== 1 && n % every) continue;
       const ty = g.GT + r * ch + (ch - th) / 2;
@@ -701,13 +711,29 @@ function drawPattern(ctx, p, g, T, opt = {}) {
 /* ---------- board ---------- */
 const board = $('#board'), bctx = board.getContext('2d'), scroller = $('#scroller');
 let G = null, raf = 0, sideTimer = 0;
-function render() {
+// A stroke only redraws the beads it touched; anything else redraws the whole chart.
+let partialQueue = [], fullPending = false, curDpr = 1;
+function render(partial) {
+  if (partial && !fullPending) partialQueue.push(...partial); else { fullPending = true; partialQueue = []; }
   if (raf) return;
   raf = requestAnimationFrame(() => {
     raf = 0;
+    if (!fullPending && partialQueue.length && G && activeTab !== 'rows') {
+      const q = partialQueue; partialQueue = [];
+      bctx.setTransform(curDpr, 0, 0, curDpr, 0, 0);
+      for (const i of new Set(q)) {
+        const r = Math.floor(i / P.cols), c = i % P.cols, [x, y] = G.xy(r, c), v = P.cells[i];
+        bctx.fillStyle = THEME.board; bctx.fillRect(x, y, G.cw, G.ch);
+        drawBead(bctx, P.shape, x, y, G.cw, G.ch, v >= 0 ? P.palette[v].hex : null, THEME);
+      }
+      return;
+    }
+    fullPending = false; partialQueue = [];
     G = geom(P, zoom, true);
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const W = Math.ceil(G.W), H = Math.ceil(G.H);
+    let dpr = Math.min(window.devicePixelRatio || 1, 3);
+    if (W * H * dpr * dpr > MAX_CANVAS) dpr = Math.max(0.5, Math.sqrt(MAX_CANVAS / (W * H)));
+    curDpr = dpr;
     if (board.width !== Math.round(W * dpr) || board.height !== Math.round(H * dpr)) {
       board.width = Math.round(W * dpr); board.height = Math.round(H * dpr);
       board.style.width = W + 'px'; board.style.height = H + 'px';
@@ -722,21 +748,25 @@ function render() {
     }
   });
 }
-function changed(sideNow) {
-  render();
+function changed(sideNow, partial) {
+  render(partial);
   dirty = true; scheduleSave();
   clearTimeout(sideTimer);
   if (sideNow) renderSide(); else sideTimer = setTimeout(renderSide, 250);
+}
+function zoomMax() { // keep the canvas within what the iPad can draw
+  const g = geom(P, 100, true);
+  return clamp(Math.floor(100 * Math.sqrt(MAX_CANVAS / ((g.W - 80) * (g.H - 36)))), 8, 80);
 }
 function fitZoom() {
   const g1 = geom(P, 100, true);
   const availW = scroller.clientWidth - 30, availH = scroller.clientHeight - 30;
   const kx = (availW - g1.GL * 2) / (g1.W - g1.GL * 2), ky = (availH - g1.GT - 10) / (g1.H - g1.GT - 10);
-  zoom = clamp(Math.floor(100 * Math.min(kx, ky)), 8, 64);
-  render();
+  zoom = clamp(Math.floor(100 * Math.min(kx, ky) * 4) / 4, 2, Math.min(64, zoomMax()));
+  render(); requestAnimationFrame(() => { scroller.scrollLeft = 0; scroller.scrollTop = 0; });
 }
 function setZoom(z, focus) {
-  const old = zoom; zoom = clamp(z, 8, 80);
+  const old = zoom; zoom = clamp(z, 2, zoomMax());
   if (zoom === old) return;
   const rect = scroller.getBoundingClientRect();
   const fx = focus ? focus[0] - rect.left : rect.width / 2, fy = focus ? focus[1] - rect.top : rect.height / 2;
@@ -761,9 +791,14 @@ function mirrors(r, c) {
   if (mirror === 'both') out.push([P.rows - 1 - r, P.cols - 1 - c]);
   return out;
 }
-function paint(r, c, v) {
+let touched = [], brush = 1;
+function paint(r, c, v, useBrush) {
   let any = false;
-  for (const [a, b] of mirrors(r, c)) { const i = a * P.cols + b; if (P.cells[i] !== v) { P.cells[i] = v; any = true; } }
+  const n = useBrush ? brush : 1, o = -Math.floor((n - 1) / 2);
+  for (let dr = o; dr < o + n; dr++) for (let dc = o; dc < o + n; dc++) {
+    const rr = r + dr, cc = c + dc; if (rr < 0 || rr >= P.rows || cc < 0 || cc >= P.cols) continue;
+    for (const [a, b] of mirrors(rr, cc)) { const i = a * P.cols + b; if (P.cells[i] !== v) { P.cells[i] = v; touched.push(i); any = true; } }
+  }
   return any;
 }
 function neighbors(r, c) {
@@ -798,7 +833,7 @@ function applyAt(cell) {
   const [r, c] = cell;
   if (tool === 'pick') { const v = P.cells[r * P.cols + c]; if (v >= 0) { selectColor(v); setTool('draw'); toast(`Picked ${P.palette[v].name}`); } return false; }
   if (tool === 'fill') return flood(r, c, cur);
-  return paint(r, c, tool === 'erase' ? -1 : cur);
+  return paint(r, c, tool === 'erase' ? -1 : cur, true);
 }
 board.addEventListener('pointerdown', e => {
   pointers.set(e.pointerId, [e.clientX, e.clientY]);
@@ -816,10 +851,11 @@ board.addEventListener('pointerdown', e => {
   const cell = G && G.hit(...evPos(e)); if (!cell) return;
   e.preventDefault();
   pushUndo();
+  touched = [];
   stroke = { changed: applyAt(cell) };
   if (stroke.changed && P.example) P.example = false;
   lastCell = cell;
-  if (stroke.changed) changed();
+  if (stroke.changed) changed(false, tool === 'fill' ? null : touched);
   if (tool === 'fill' || tool === 'pick') { if (!stroke.changed) { undoStack.pop(); updUndo(); } stroke = null; }
 });
 board.addEventListener('pointermove', e => {
@@ -838,9 +874,10 @@ board.addEventListener('pointermove', e => {
   if (shapeDrag) { shapeMove(pos); return; }
   if (!stroke || !cell) return;
   const path = lastCell ? cellsBetween(lastCell, cell) : [cell];
+  touched = [];
   let any = false; for (const cc of path) any = applyAt(cc) || any;
   lastCell = cell;
-  if (any) { stroke.changed = true; changed(); }
+  if (any) { stroke.changed = true; changed(false, touched); }
 });
 function endPointer(e) {
   pointers.delete(e.pointerId);
@@ -1018,10 +1055,17 @@ $('#btnMirror').addEventListener('click', () => {
   $('#btnMirror').setAttribute('aria-pressed', mirror !== 'none'); $('#mirrorLbl').textContent = MIRROR_LBL[mirror];
   toast(mirror === 'none' ? 'Mirror off' : mirror === 'h' ? 'Mirror left and right' : mirror === 'v' ? 'Mirror top and bottom' : 'Mirror all four corners');
 });
+const BRUSHES = [1, 2, 3, 5, 9];
+$('#btnBrush').addEventListener('click', () => {
+  brush = BRUSHES[(BRUSHES.indexOf(brush) + 1) % BRUSHES.length];
+  $('#brushLbl').textContent = `Brush ${brush}`; $('#btnBrush').setAttribute('aria-pressed', brush > 1);
+  toast(brush === 1 ? 'Brush: one bead at a time' : `Brush: ${brush} × ${brush} beads`);
+  if (tool !== 'draw' && tool !== 'erase') setTool('draw');
+});
 $('#btnUndo').addEventListener('click', undo);
 $('#btnRedo').addEventListener('click', redo);
-$('#zoomIn').addEventListener('click', () => setZoom(Math.round(zoom * 1.2) + 1));
-$('#zoomOut').addEventListener('click', () => setZoom(Math.round(zoom / 1.2)));
+$('#zoomIn').addEventListener('click', () => setZoom(zoom < 8 ? zoom + 1 : Math.round(zoom * 1.2) + 1));
+$('#zoomOut').addEventListener('click', () => setZoom(zoom <= 8 ? zoom - 1 : Math.round(zoom / 1.2)));
 $('#zoomFit').addEventListener('click', fitZoom);
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea, select') || document.querySelector('dialog[open]')) return;
@@ -1278,12 +1322,39 @@ function drawChoice(cv, layout) {
   cv.width = Math.ceil(g.W); cv.height = Math.ceil(g.H);
   drawPattern(ctx, p, g, T, {});
 }
-function updSizeNote() {
-  const cols = clamp(+$('#sCols').value || 2, 2, 150), rows = clamp(+$('#sRows').value || 2, 2, 200);
-  const fake = { layout: setupLayout, size: $('#sSize').value, cols, rows };
-  const [w, h] = finishedSize(fake);
-  $('#sizeNote').innerHTML = `With these settings the finished piece is about <b>${fmtLen(w)} wide × ${fmtLen(h)} tall</b> (${fmtIn(w)} × ${fmtIn(h)}). A bracelet is usually 15–19 cm long; earrings are often 2–4 cm wide.`;
+// Width/height in cm or inches and beads/rows are kept in step. Whichever was typed last wins
+// when the bead size or layout changes.
+let sizeEdited = 'beads';
+const unitMm = () => $('#sUnit').value === 'in' ? 25.4 : 10;
+function measureToBeads() {
+  const sz = SIZES[$('#sSize').value], u = unitMm();
+  const wmm = (+$('#sWcm').value || 0) * u, hmm = (+$('#sHcm').value || 0) * u;
+  let cols, rows;
+  if (setupLayout === 'brick') { cols = Math.round((wmm - sz.dia / 2) / sz.dia); rows = Math.round(hmm / sz.len); }
+  else { cols = Math.round(wmm / sz.len); rows = Math.round((hmm - (setupLayout === 'peyote' ? sz.dia / 2 : 0)) / sz.dia); }
+  $('#sCols').value = Math.max(2, cols); $('#sRows').value = Math.max(2, rows);
 }
+function beadsToMeasure() {
+  const [w, h] = finishedSize({ layout: setupLayout, size: $('#sSize').value, cols: Math.max(2, +$('#sCols').value || 2), rows: Math.max(2, +$('#sRows').value || 2) });
+  const u = unitMm(); $('#sWcm').value = (w / u).toFixed(1); $('#sHcm').value = (h / u).toFixed(1);
+}
+function updSizeNote() {
+  $$('.unitLbl').forEach(e => e.textContent = $('#sUnit').value === 'in' ? 'inches' : 'cm');
+  const rawC = Math.round(+$('#sCols').value || 2), rawR = Math.round(+$('#sRows').value || 2);
+  const cols = clamp(rawC, 2, MAX_COLS), rows = clamp(rawR, 2, MAX_ROWS), sz = SIZES[$('#sSize').value];
+  const [w, h] = finishedSize({ layout: setupLayout, size: $('#sSize').value, cols, rows });
+  const beads = cols * rows;
+  let html = `That's <b>${cols} beads across × ${rows} rows</b>, about <b>${fmtLen(w)} wide × ${fmtLen(h)} tall</b> (${fmtIn(w)} × ${fmtIn(h)}), and up to <b>${beads.toLocaleString()} beads</b>`;
+  html += sz.perGram ? ` (about ${Math.ceil(beads * 1.1 / sz.perGram).toLocaleString()} g).` : ` (${Math.ceil(beads * 1.1 / sz.perStrand)} strands).`;
+  if (rawC > MAX_COLS || rawR > MAX_ROWS) html += ` <br><b>The largest grid is ${MAX_COLS} × ${MAX_ROWS} beads</b>, so it will be cut to that size. Choose a bigger bead to reach this size in fewer beads.`;
+  else if (beads > 15000) html += ' <br>This is a big project. Fill, Shapes and Photo will save you a lot of tapping, and the Rows tab helps you keep your place.';
+  else html += ' A bracelet is usually 15–19 cm long; earrings are often 2–4 cm wide.';
+  $('#sizeNote').innerHTML = html;
+}
+$('#sWcm').addEventListener('input', () => { sizeEdited = 'measure'; measureToBeads(); updSizeNote(); });
+$('#sHcm').addEventListener('input', () => { sizeEdited = 'measure'; measureToBeads(); updSizeNote(); });
+$('#sUnit').addEventListener('change', () => { beadsToMeasure(); updSizeNote(); });
+function sizeFollow() { if (sizeEdited === 'measure') measureToBeads(); else beadsToMeasure(); updSizeNote(); }
 function openSetup(mode) {
   setupMode = mode;
   const src = mode === 'edit' ? P : { name: 'My pattern', layout: P.layout, size: P.size, shape: P.shape, cols: 30, rows: 30 };
@@ -1296,15 +1367,15 @@ function openSetup(mode) {
   $('#sSize').value = src.size; $('#sShape').value = src.shape; $('#sCols').value = src.cols; $('#sRows').value = src.rows;
   const bg = $('#sBg'); bg.innerHTML = `<option value="-1">${mode === 'edit' ? 'New beads: empty' : 'Empty grid (no beads yet)'}</option>` + P.palette.map((c, i) => `<option value="${i}">${mode === 'edit' ? 'New beads: ' : 'Filled with '}${esc(c.name)}</option>`).join('');
   $('#sBgField').firstChild.textContent = mode === 'edit' ? 'If the grid grows' : 'Start with';
-  updSizeNote();
+  sizeEdited = 'beads'; beadsToMeasure(); updSizeNote();
   $('#dlgSetup').showModal();
 }
-$$('#layoutChoices .choice').forEach(b => b.addEventListener('click', () => { setupLayout = b.dataset.layout; $$('#layoutChoices .choice').forEach(x => x.setAttribute('aria-pressed', x === b)); updSizeNote(); }));
-$('#sSize').addEventListener('change', () => { $('#sShape').value = SIZES[$('#sSize').value].shape; updSizeNote(); });
-['#sCols', '#sRows'].forEach(s => $(s).addEventListener('input', updSizeNote));
+$$('#layoutChoices .choice').forEach(b => b.addEventListener('click', () => { setupLayout = b.dataset.layout; $$('#layoutChoices .choice').forEach(x => x.setAttribute('aria-pressed', x === b)); sizeFollow(); }));
+$('#sSize').addEventListener('change', () => { $('#sShape').value = SIZES[$('#sSize').value].shape; sizeFollow(); });
+['#sCols', '#sRows'].forEach(s => $(s).addEventListener('input', () => { sizeEdited = 'beads'; beadsToMeasure(); updSizeNote(); }));
 $('#setupForm').addEventListener('submit', e => {
   e.preventDefault();
-  const cols = clamp(Math.round(+$('#sCols').value) || 2, 2, 150), rows = clamp(Math.round(+$('#sRows').value) || 2, 2, 200);
+  const cols = clamp(Math.round(+$('#sCols').value) || 2, 2, MAX_COLS), rows = clamp(Math.round(+$('#sRows').value) || 2, 2, MAX_ROWS);
   const bg = +$('#sBg').value;
   if (setupMode === 'new') {
     saveNow();
@@ -1365,7 +1436,10 @@ $('#btnList').addEventListener('click', async () => { listPendingDelete = null; 
 /* export */
 let exportBlob = null;
 function buildExport() {
-  const T = LIGHT_THEME, base = 30, g = geom(P, base, true), scale = 2;
+  const T = LIGHT_THEME;
+  let base = 30, scale = 2, g = geom(P, base, true);
+  if ((g.W + 60) * (g.H + 200) * 4 > MAX_CANVAS) scale = 1;
+  if ((g.W + 60) * (g.H + 200) > MAX_CANVAS) { base = Math.max(6, Math.floor(30 * Math.sqrt(MAX_CANVAS / ((g.W + 60) * (g.H + 200))) * 0.95)); g = geom(P, base, true); }
   const list = shopping(), [w, h] = finishedSize(P), sz = SIZES[P.size];
   const pad = 28, headH = 74, cols = Math.max(1, Math.floor((Math.max(g.W, 520)) / 250));
   const legendRows = Math.ceil(list.length / cols);
@@ -1457,7 +1531,7 @@ function runPhoto() {
   const cells = new Int16Array(cols * rows);
   px.forEach((p, i) => { if (alpha[i] < 128) { cells[i] = -1; return; } let bi = 0, bd = Infinity; cents.forEach((c, j) => { const d = d2(p, c); if (d < bd) { bd = d; bi = j; } }); cells[i] = bi; });
   phResult = { palette, cells };
-  const prev = { ...P, palette, cells, progress: 0 }, pg = geom(prev, 14, false), out = $('#photoPreview');
+  const prev = { ...P, palette, cells, progress: 0 }, pg = geom(prev, clamp(700 / Math.max(prev.cols, prev.rows), 3, 14), false), out = $('#photoPreview');
   out.width = Math.ceil(pg.W); out.height = Math.ceil(pg.H);
   drawPattern(out.getContext('2d'), prev, pg, THEME, {});
   $('#phApply').disabled = false;
