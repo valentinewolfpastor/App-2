@@ -11,7 +11,7 @@ A pattern designer for bead weaving.
 - **Colours:** editable named palette, plus "swap all beads of one colour to another".
 - **Bead count:** beads per colour, +10% spare, grams (or pearl strands) to buy, finished size, loom warp-thread length. You can copy it as a shopping list.
 - **Rows:** a row-by-row word chart ("3 Red, 2 White…") and a tracker that outlines the current row on the chart and fades the rows you've finished.
-- **Photo → pattern:** fits a picture to the grid and reduces it to N colours (k-means), or to your current palette.
+- **Photo → pattern:** fits a picture to the grid and reduces it to N colours, or to your current palette. Colours are found in CIE Lab with k-means; each colour keeps its pixels' average vividness, each bead takes the colour most of its pixels belong to, and a Colour boost slider adds saturation. The original is shown beside the result.
 - **Export:** a PNG chart with a colour key.
 
 `index.html` is published as a Claude artifact with the `db` + `user` capabilities: patterns are saved under `data/users/<id>/<patternId>`, which is private to the signed-in owner. `downloads` saves the exported image. Opened outside Claude, the page saves to browser storage instead.

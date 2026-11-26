@@ -183,6 +183,10 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
 .pat .acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .pat .acts .btn { min-height: 34px; padding: 6px 10px; font-size: 12.5px; }
 #exportImg { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+.phcompare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.phcompare figure { margin: 0; display: grid; gap: 4px; align-content: start; }
+.phcompare figcaption { font-size: 12px; color: var(--muted); font-weight: 600; }
+#phOrig { width: 100%; height: auto; border-radius: 10px; background: var(--sunken); }
 #photoPreview { width: 100%; height: auto; image-rendering: pixelated; border-radius: 10px; background: var(--sunken); }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 13px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
 .toast.show { opacity: 1; }
@@ -433,11 +437,15 @@ dialog::backdrop { background: rgba(20, 12, 24, .45); }
   <div class="dlg-body">
     <label class="field">Choose a photo or drawing<input type="file" id="phFile" accept="image/*" class="input"></label>
     <div class="grid2">
-      <label class="field">Number of colours: <span id="phKLbl">6</span><input type="range" id="phK" min="2" max="16" value="6"></label>
+      <label class="field"><span>Number of colours: <span id="phKLbl">6</span></span><input type="range" id="phK" min="2" max="16" value="6"></label>
+      <label class="field"><span>Colour boost: <span id="phBoostLbl">20%</span></span><input type="range" id="phBoost" min="0" max="100" step="5" value="20"></label>
       <label class="field" style="align-content:end"><span class="row" style="gap:8px;color:var(--ink)"><input type="checkbox" id="phUsePal"> Use my current colours</span></label>
     </div>
-    <canvas id="photoPreview" width="10" height="10"></canvas>
-    <p class="small muted" style="margin:0">The photo is fitted to your grid (<span id="phDims"></span>). Simple pictures with bold shapes work best. You can touch up any bead afterwards, and Undo brings back your old pattern.</p>
+    <div class="phcompare">
+      <figure><canvas id="phOrig" width="10" height="10"></canvas><figcaption>Your picture</figcaption></figure>
+      <figure><canvas id="photoPreview" width="10" height="10"></canvas><figcaption id="phCap">Bead pattern</figcaption></figure>
+    </div>
+    <p class="small muted" style="margin:0">The photo is fitted to your grid (<span id="phDims"></span>). Simple pictures with bold shapes work best. If colours still look dull, raise Colour boost; if two shades of one colour merge, add more colours. You can touch up any bead afterwards, and Undo brings back your old pattern.</p>
   </div>
   <div class="dlg-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="phApply" disabled>Use this pattern</button></div>
 </div></dialog>
@@ -1489,51 +1497,117 @@ $('#phFile').addEventListener('change', e => {
   img.onerror = () => toast('That file could not be opened as a picture');
   img.src = url;
 });
-$('#phK').addEventListener('input', e => { $('#phKLbl').textContent = e.target.value; if (phImg) runPhoto(); });
-$('#phUsePal').addEventListener('change', () => { $('#phK').disabled = $('#phUsePal').checked; if (phImg) runPhoto(); });
-function kmeans(px, k) {
-  const pts = px.length > 6000 ? px.filter((_, i) => i % Math.ceil(px.length / 6000) === 0) : px;
-  const d2 = (a, b) => (a[0] - b[0]) ** 2 * 0.3 + (a[1] - b[1]) ** 2 * 0.59 + (a[2] - b[2]) ** 2 * 0.11;
-  const mean = [0, 1, 2].map(j => pts.reduce((s, p) => s + p[j], 0) / pts.length);
-  let cents = [pts.reduce((best, p) => d2(p, mean) < d2(best, mean) ? p : best, pts[0]).slice()];
-  while (cents.length < k) {
-    let best = null, bd = -1;
-    for (const p of pts) { let d = Infinity; for (const c of cents) d = Math.min(d, d2(p, c)); if (d > bd) { bd = d; best = p; } }
-    if (!best || bd === 0) break; cents.push(best.slice());
+// Photo → pattern. Works in CIE Lab so colour differences match what the eye sees.
+// 1. The picture is drawn at several pixels per bead, so a bead isn't the blurred average of its area.
+// 2. k-means finds the colours; each cluster keeps the average vividness of its own pixels
+//    (averaging colours otherwise greys them out).
+// 3. Each bead takes the colour most of its pixels belong to.
+let phTimer = 0;
+const runPhotoSoon = () => { clearTimeout(phTimer); phTimer = setTimeout(() => phImg && runPhoto(), 60); };
+$('#phK').addEventListener('input', e => { $('#phKLbl').textContent = e.target.value; runPhotoSoon(); });
+$('#phBoost').addEventListener('input', e => { $('#phBoostLbl').textContent = e.target.value + '%'; runPhotoSoon(); });
+$('#phUsePal').addEventListener('change', () => { $('#phK').disabled = $('#phUsePal').checked; runPhotoSoon(); });
+const LIN = new Float32Array(256).map((_, i) => { const v = i / 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+function rgb2lab(r, g, b) {
+  const R = LIN[r], G = LIN[g], B = LIN[b];
+  const f = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const fx = f((R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047), fy = f(R * 0.2126 + G * 0.7152 + B * 0.0722), fz = f((R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+function lab2rgb(L, a, b) {
+  const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+  const fi = t => { const t3 = t * t * t; return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787; };
+  const x = fi(fx) * 0.95047, y = fi(fy), z = fi(fz) * 1.08883;
+  const g = v => { v = clamp(v, 0, 1); return 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055); };
+  return [g(x * 3.2406 - y * 1.5372 - z * 0.4986), g(-x * 0.9689 + y * 1.8758 + z * 0.0415), g(x * 0.0557 - y * 0.2040 + z * 1.0570)];
+}
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function nearest(cents, L, a, b) {
+  let bi = 0, bd = Infinity;
+  for (let j = 0; j < cents.length; j++) { const c = cents[j], d = (c[0] - L) ** 2 + (c[1] - a) ** 2 + (c[2] - b) ** 2; if (d < bd) { bd = d; bi = j; } }
+  return [bi, bd];
+}
+function kmeansLab(lab, n, k, seed) {
+  const rand = rng(seed), cents = [], dist = new Float64Array(n).fill(Infinity);
+  let i0 = Math.floor(rand() * n); cents.push([lab[i0 * 3], lab[i0 * 3 + 1], lab[i0 * 3 + 2]]);
+  while (cents.length < k) { // k-means++: favour colours far from the ones already chosen
+    const c = cents[cents.length - 1]; let sum = 0;
+    for (let i = 0; i < n; i++) { const d = (lab[i * 3] - c[0]) ** 2 + (lab[i * 3 + 1] - c[1]) ** 2 + (lab[i * 3 + 2] - c[2]) ** 2; if (d < dist[i]) dist[i] = d; sum += dist[i]; }
+    if (sum === 0) break;
+    let t = rand() * sum, i = 0; while (i < n - 1 && (t -= dist[i]) > 0) i++;
+    cents.push([lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]]);
   }
+  let err = 0, acc;
   for (let it = 0; it < 14; it++) {
-    const sum = cents.map(() => [0, 0, 0, 0]);
-    for (const p of pts) { let bi = 0, bd = Infinity; cents.forEach((c, i) => { const d = d2(p, c); if (d < bd) { bd = d; bi = i; } }); const s = sum[bi]; s[0] += p[0]; s[1] += p[1]; s[2] += p[2]; s[3]++; }
-    cents = cents.map((c, i) => sum[i][3] ? [sum[i][0] / sum[i][3], sum[i][1] / sum[i][3], sum[i][2] / sum[i][3]] : c);
+    acc = cents.map(() => [0, 0, 0, 0, 0]); err = 0;
+    for (let i = 0; i < n; i++) {
+      const L = lab[i * 3], a = lab[i * 3 + 1], b = lab[i * 3 + 2], [j, d] = nearest(cents, L, a, b), s = acc[j];
+      s[0] += L; s[1] += a; s[2] += b; s[3] += Math.hypot(a, b); s[4]++; err += d;
+    }
+    acc.forEach((s, j) => { if (s[4]) cents[j] = [s[0] / s[4], s[1] / s[4], s[2] / s[4]]; });
   }
-  return { cents, d2 };
+  // give each colour back the vividness of its own pixels
+  acc.forEach((s, j) => { if (!s[4]) return; const c = cents[j], ch = Math.hypot(c[1], c[2]), want = s[3] / s[4]; if (ch > 0.5) { c[1] *= want / ch; c[2] *= want / ch; } });
+  return { cents: cents.filter((_, j) => acc[j][4] > 0), err };
 }
 function runPhoto() {
   const cols = P.cols, rows = P.rows;
-  const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
-  const ctx = cv.getContext('2d');
-  // cover-crop the image to the grid's real shape
+  const S = clamp(Math.floor(Math.sqrt(250000 / (cols * rows))), 1, 6); // pixels per bead side
+  const W = cols * S, H = rows * S;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  // cover-crop the picture to the pattern's real shape
   const g = geom(P, 10, false), gridAspect = (g.W - 8) / (g.H - 8), ia = phImg.width / phImg.height;
   let sw = phImg.width, sh = phImg.height, sx = 0, sy = 0;
   if (ia > gridAspect) { sw = sh * gridAspect; sx = (phImg.width - sw) / 2; } else { sh = sw / gridAspect; sy = (phImg.height - sh) / 2; }
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(phImg, sx, sy, sw, sh, 0, 0, cols, rows);
-  const data = ctx.getImageData(0, 0, cols, rows).data;
-  const px = [], alpha = [];
-  for (let i = 0; i < cols * rows; i++) { px.push([data[i * 4], data[i * 4 + 1], data[i * 4 + 2]]); alpha.push(data[i * 4 + 3]); }
-  const opaque = px.filter((_, i) => alpha[i] >= 128);
-  let palette, cents, d2;
-  if ($('#phUsePal').checked) { palette = P.palette.map(c => ({ ...c })); cents = palette.map(c => hexToRgb(c.hex)); d2 = (a, b) => (a[0] - b[0]) ** 2 * 0.3 + (a[1] - b[1]) ** 2 * 0.59 + (a[2] - b[2]) ** 2 * 0.11; }
-  else {
-    const km = kmeans(opaque.length ? opaque : px, +$('#phK').value); cents = km.cents; d2 = km.d2;
-    const used = {}; palette = cents.map(c => { let n = nameColor(c); used[n] = (used[n] || 0) + 1; if (used[n] > 1) n += ' ' + used[n]; return { name: n, hex: rgbToHex(c) }; });
+  ctx.drawImage(phImg, sx, sy, sw, sh, 0, 0, W, H);
+  const data = ctx.getImageData(0, 0, W, H).data;
+  // the original, for comparison
+  const orig = $('#phOrig'), ow = 360, oh = Math.round(360 / gridAspect);
+  orig.width = ow; orig.height = oh; const octx = orig.getContext('2d'); octx.imageSmoothingQuality = 'high'; octx.drawImage(phImg, sx, sy, sw, sh, 0, 0, ow, oh);
+
+  const boost = 1 + (+$('#phBoost').value) / 100, lc = 1 + (boost - 1) * 0.25;
+  const N = W * H, lab = new Float32Array(N * 3), opaque = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    if (data[i * 4 + 3] < 128) continue;
+    opaque[i] = 1;
+    const [L, a, b] = rgb2lab(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    lab[i * 3] = clamp(50 + (L - 50) * lc, 0, 100); lab[i * 3 + 1] = a * boost; lab[i * 3 + 2] = b * boost;
   }
-  const cells = new Int16Array(cols * rows);
-  px.forEach((p, i) => { if (alpha[i] < 128) { cells[i] = -1; return; } let bi = 0, bd = Infinity; cents.forEach((c, j) => { const d = d2(p, c); if (d < bd) { bd = d; bi = j; } }); cells[i] = bi; });
+  let palette, cents;
+  if ($('#phUsePal').checked) {
+    palette = P.palette.map(c => ({ ...c })); cents = palette.map(c => rgb2lab(...hexToRgb(c.hex)));
+  } else {
+    // cluster a sample of up to 20,000 pixels; keep the best of three starts
+    const idx = []; const step = Math.max(1, Math.floor(N / 20000));
+    for (let i = 0; i < N; i += step) if (opaque[i]) idx.push(i);
+    const sample = new Float32Array(idx.length * 3); idx.forEach((p, j) => { sample[j * 3] = lab[p * 3]; sample[j * 3 + 1] = lab[p * 3 + 1]; sample[j * 3 + 2] = lab[p * 3 + 2]; });
+    const k = Math.min(+$('#phK').value, Math.max(1, idx.length));
+    let best = null;
+    if (idx.length) for (let seed = 1; seed <= 3; seed++) { const r = kmeansLab(sample, idx.length, k, seed * 7919); if (!best || r.err < best.err) best = r; }
+    cents = best ? best.cents : [[50, 0, 0]];
+    cents.sort((x, y) => y[0] - x[0]); // light to dark
+    const used = {};
+    palette = cents.map(c => { const rgb = lab2rgb(...c); let n = nameColor(rgb); used[n] = (used[n] || 0) + 1; if (used[n] > 1) n += ' ' + used[n]; return { name: n, hex: rgbToHex(rgb) }; });
+  }
+  // each bead takes the colour most of its pixels belong to
+  const cells = new Int16Array(cols * rows), votes = new Int32Array(cents.length + 1);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    votes.fill(0);
+    for (let y = r * S; y < r * S + S; y++) for (let x = c * S; x < c * S + S; x++) {
+      const i = y * W + x;
+      if (!opaque[i]) { votes[cents.length]++; continue; }
+      votes[nearest(cents, lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2])[0]]++;
+    }
+    let bi = 0; for (let j = 1; j < votes.length; j++) if (votes[j] > votes[bi]) bi = j;
+    cells[r * cols + c] = bi === cents.length ? -1 : bi;
+  }
   phResult = { palette, cells };
   const prev = { ...P, palette, cells, progress: 0 }, pg = geom(prev, clamp(700 / Math.max(prev.cols, prev.rows), 3, 14), false), out = $('#photoPreview');
   out.width = Math.ceil(pg.W); out.height = Math.ceil(pg.H);
   drawPattern(out.getContext('2d'), prev, pg, THEME, {});
+  $('#phCap').textContent = `Bead pattern · ${palette.length} colours`;
   $('#phApply').disabled = false;
 }
 $('#phApply').addEventListener('click', () => {
